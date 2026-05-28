@@ -11,7 +11,8 @@ frxnls/                           # the plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
 │   ├── qa/SKILL.md                          # /frxnls:qa — browser QA via Playwright MCP
-│   └── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
+│   ├── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
+│   └── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
 └── agents/
     └── rex-code-reviewer.md      # frxnls:rex-code-reviewer — PR review agent
 ```
@@ -22,7 +23,8 @@ frxnls/                           # the plugin
 |-------|---------------------|----------------------------|--------------|
 | Skill | `qa`                | `/frxnls:qa`               | Test a running web app in a real browser, then fix and verify bugs |
 | Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
-| Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) |
+| Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
+| Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — with quote-the-line gate + LLM-security lens |
 
 ## Install
 

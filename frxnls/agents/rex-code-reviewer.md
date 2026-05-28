@@ -99,6 +99,8 @@ Each subagent returns structured JSON using this contract:
       "line": 42,
       "confidence": 75,
       "pre_existing": false,
+      "evidence_line": "verbatim source line(s) at file:line that motivate this finding",
+      "exploit_scenario": "security only: concrete step-by-step attack path; null for non-security findings",
       "suggested_fix": "concrete action"
     }
   ]
@@ -107,6 +109,8 @@ Each subagent returns structured JSON using this contract:
 
 Rules for subagents:
 - Every finding must cite `file:line`.
+- **Quote-the-line gate (mandatory).** `evidence_line` must contain the verbatim source line(s) that motivate the finding. If you cannot quote the exact line — e.g. "field X doesn't exist", "value might be null", "save() drops fields" — you have not verified it: drop the finding or force confidence < 50. Do not invent a confident finding you can't anchor to quoted code. This kills the hallucinated-finding class.
+- **Framework-meta exception.** When the symbol is created by a framework construct (Drizzle schema/relations, ORM model/migration, decorators, generated client), quote the construct that creates it (schema file, migration, decorator) — not the class body. "I read the source that creates this symbol" is the bar, not "I grepped the name and missed it."
 - `pre_existing: true` when the issue exists in code the PR did not author (git blame check).
 - Omit findings with confidence below 50.
 - No prose outside the JSON.
@@ -130,6 +134,25 @@ Review changed files for:
 - SSRF, open redirects
 - TypeScript `any` bypassing type safety on external/user data
 - Any OWASP Top 10 issue
+
+**LLM / AI security (this is an AI-heavy codebase — always check):**
+- User input interpolated into a system prompt or tool schema (prompt injection)
+- LLM output rendered as HTML (`dangerouslySetInnerHTML`, `innerHTML`, `.html()`) or executed (`eval`, `Function`) — treated as trusted
+- Tool/function calls executed without validating the model's arguments
+- Unbounded LLM calls a user can trigger (cost/spend amplification — this is financial risk, NOT DoS, so it is in scope)
+- AI API keys hardcoded instead of env vars
+
+**Every security finding MUST include `exploit_scenario`** — a concrete step-by-step path an attacker follows. "This pattern is insecure" with no exploit path is not a finding; drop it.
+
+**Trace, don't pattern-match.** Before reporting, confirm user input actually reaches the sink (follow the data flow) and that no upstream middleware/gateway already handles it. Mark such findings VERIFIED in the title only when you traced the path.
+
+**Framework-aware precedents — do NOT flag these as vulnerabilities:**
+- React/JSX and Angular escape output by default — only flag explicit escape hatches.
+- Client-side JS/TS does not enforce auth; that is the server's job. Don't flag missing client-side auth.
+- Env vars and CLI flags are trusted input.
+- UUIDs are unguessable — don't demand UUID validation.
+- User content in the user-message position of an LLM call is NOT prompt injection — only flag when it enters the system prompt, tool schema, or function-calling context.
+- Drizzle/parameterized queries are injection-safe — only flag raw string-interpolated SQL.
 
 Security findings default to P0 or P1.
 
@@ -167,12 +190,21 @@ Spawn only when Stage 2 triggers apply. Review for:
 
 Aggregate findings across subagents:
 
-1. **Validate.** Drop findings missing required fields or with invalid severity/confidence values.
-2. **Deduplicate.** Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. When fingerprints match across reviewers, merge: keep highest severity, note all contributing reviewers.
-3. **Cross-reviewer promotion.** 2+ reviewers flagging the same fingerprint → raise confidence one step (`50 → 75`, `75 → 100`).
-4. **Separate pre-existing.** Pull findings with `pre_existing: true` into a separate list. These do not block the verdict.
-5. **Confidence gate.** Suppress remaining findings with confidence < 75. Exception: P0 findings at confidence ≥ 50 survive.
-6. **Sort.** Severity (P0 first) → confidence (desc) → file → line.
+1. **Validate.** Drop findings missing required fields or with invalid severity/confidence values. Also drop any finding whose `evidence_line` is empty or does not actually contain code (the quote-the-line gate, enforced at merge).
+2. **Hard exclusions.** Discard findings matching these — they are noise, not bugs:
+   - DoS / resource exhaustion / rate-limiting absence (EXCEPTION: LLM cost/spend amplification is in scope)
+   - "Missing hardening" / absent best practice with no concrete exploit
+   - Memory-safety issues in memory-safe languages (TS/JS, Go, Rust, Java, C#)
+   - Findings only in test files/fixtures not imported by non-test code
+   - Log spoofing / "logs unsanitized input" (logging a secret IS real; logging a URL is not)
+   - SSRF where the attacker controls only the path, not host or protocol
+   - Insecure randomness in non-security contexts (UI ids, cache keys)
+   - Concerns in `*.md` docs (EXCEPTION: `SKILL.md` / agent files are executable prompt code — flag those)
+3. **Deduplicate.** Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. When fingerprints match across reviewers, merge: keep highest severity, note all contributing reviewers.
+4. **Cross-reviewer promotion.** 2+ reviewers flagging the same fingerprint → raise confidence one step (`50 → 75`, `75 → 100`).
+5. **Separate pre-existing.** Pull findings with `pre_existing: true` into a separate list. These do not block the verdict.
+6. **Confidence gate.** Suppress remaining findings with confidence < 75. Exception: P0 findings at confidence ≥ 50 survive.
+7. **Sort.** Severity (P0 first) → confidence (desc) → file → line.
 
 ### Stage 5 — Post to PR (when PR exists)
 

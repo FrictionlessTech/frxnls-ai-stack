@@ -1,7 +1,7 @@
 {
   "name": "frxnls",
-  "description": "Frictionless personal toolkit: qa + first-principles-brainstorm skills and the rex-code-reviewer agent.",
-  "version": "0.2.0",
+  "description": "Frictionless personal toolkit: qa, first-principles-brainstorm, security-audit skills and the rex-code-reviewer agent.",
+  "version": "0.3.0",
   "author": {
     "name": "Miguel Zakharia"
   }
