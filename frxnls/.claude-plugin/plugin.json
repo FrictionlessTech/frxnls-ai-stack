@@ -1,7 +1,7 @@
 {
   "name": "frxnls",
-  "description": "Frictionless personal toolkit: qa skill (browser QA via Playwright MCP) and rex-code-reviewer agent.",
-  "version": "0.1.0",
+  "description": "Frictionless personal toolkit: qa + first-principles-brainstorm skills and the rex-code-reviewer agent.",
+  "version": "0.2.0",
   "author": {
     "name": "Miguel Zakharia"
   }

@@ -154,7 +154,17 @@ The one uncomfortable thing to answer before anything else.
 ONE concrete real-world action to take next — not "go build it." (Watch a user, email a named person, ship the 1-day wedge, run the one test that could kill it.)
 ```
 
-**Offer to save it:** after delivering, ask if they want it written to a file (e.g. `docs/brainstorm-<slug>-<date>.md` in the current project). Only write if they say yes.
+**Offer to persist it.** After delivering the synthesis, ask how they want it saved (one question, three options):
+
+- **Save to a file** — write the synthesis to `docs/brainstorm-<slug>-<date>.md` in the current project (create `docs/` if missing).
+- **Create a GitHub issue** — open an issue in the current repo with the synthesis as the body. Use a title like the Core Problem line. Run:
+  ```bash
+  gh issue create --title "Brainstorm: <core problem>" --body-file <tmpfile>
+  ```
+  Write the synthesis to a temp file first (preserves markdown). If the repo uses labels, add a fitting one (e.g. `--label idea`); skip if unsure. Report the issue URL `gh` prints.
+- **Don't save** — leave it in the chat only.
+
+Only act after they choose. If `gh` isn't authenticated or the dir isn't a repo, say so and fall back to the file option.
 
 ---
 
