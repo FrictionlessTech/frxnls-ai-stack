@@ -40,15 +40,18 @@ claude plugin install frxnls@frxnls --scope user
 The live source is the GitHub repo, not your local checkout. To ship a change:
 
 ```bash
-# edit a skill/agent file, then:
+# edit a skill/agent file, BUMP the version in frxnls/.claude-plugin/plugin.json, then:
 git add -A && git commit -m "..." && git push
 
 # pull the pushed change into Claude Code:
 claude plugin marketplace update frxnls
-claude plugin update frxnls
+claude plugin update frxnls@frxnls   # qualified name required; plain `frxnls` errors
 ```
 
 (Restart Claude Code to load updated components.)
+
+> `plugin update` only pulls when the manifest `version` changed — always bump it.
+> To force a refresh without a bump: `claude plugin uninstall frxnls && claude plugin install frxnls@frxnls --scope user`.
 
 ## Adding a component
 
