@@ -22,18 +22,26 @@ frxnls/                           # the plugin
 | Skill | `qa`                | `/frxnls:qa`               | Test a running web app in a real browser, then fix and verify bugs |
 | Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) |
 
-## Install / update locally
+## Install
 
-This repo *is* the marketplace. Register it once, then install:
+This repo *is* the marketplace, served from GitHub. On any machine:
 
 ```bash
-claude plugin marketplace add /Users/miguel/projects/frictionless/frxnls-ai-stack --scope user
+claude plugin marketplace add FrictionlessTech/frxnls-ai-stack --scope user
 claude plugin install frxnls@frxnls --scope user
 ```
 
-After editing any skill or agent file, pull the changes into your session:
+(Repo is private — requires `gh`/git auth with access to the org.)
+
+## Editing components
+
+The live source is the GitHub repo, not your local checkout. To ship a change:
 
 ```bash
+# edit a skill/agent file, then:
+git add -A && git commit -m "..." && git push
+
+# pull the pushed change into Claude Code:
 claude plugin marketplace update frxnls
 claude plugin update frxnls
 ```
@@ -45,4 +53,4 @@ claude plugin update frxnls
 - New skill: `frxnls/skills/<name>/SKILL.md`
 - New agent: `frxnls/agents/<name>.md`
 
-Then `claude plugin update frxnls` and restart.
+Commit, push, then `marketplace update` + `plugin update` as above.
