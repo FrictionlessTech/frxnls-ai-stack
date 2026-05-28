@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "frxnls",
+  "description": "Miguel's personal Frictionless skills and agents.",
+  "owner": {
+    "name": "Miguel Zakharia"
+  },
+  "plugins": [
+    {
+      "name": "frxnls",
+      "description": "Frictionless personal toolkit: qa skill and rex-code-reviewer agent.",
+      "source": "./frxnls",
+      "category": "productivity"
+    }
+  ]
+}
