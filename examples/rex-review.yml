@@ -6,7 +6,9 @@
 # gates merge on the job exit code via a required status check.
 #
 # Required secrets (repo or org):
-#   ANTHROPIC_API_KEY                  - Claude API key
+#   CLAUDE_CODE_OAUTH_TOKEN            - Claude auth. EITHER a subscription token
+#                                        from `claude setup-token` (Pro/Max plan),
+#                                        OR use ANTHROPIC_API_KEY instead (see Run step).
 #   REX_APP_ID, REX_APP_PRIVATE_KEY    - GitHub App creds (see README "CI" section)
 # If you skip the App and use the built-in GITHUB_TOKEN, the reviewer shows as
 # github-actions[bot] and its approval may not satisfy "required reviewers" —
@@ -59,7 +61,9 @@ jobs:
 
       - name: Run Rex
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Auth: use your Claude subscription via `claude setup-token` (Pro/Max),
+          # OR swap this line for: ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_TOKEN: ${{ steps.bot.outputs.token }}   # gh posts the review AS the bot
           PR: ${{ github.event.pull_request.number }}
         run: |

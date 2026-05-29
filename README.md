@@ -79,10 +79,14 @@ that job required in branch protection to block merges.
 
 **Setup:**
 1. Create a GitHub App (perms: Pull requests RW, Contents RO). Install it on the org +
-   repos that run the workflow. Store `REX_APP_ID` + `REX_APP_PRIVATE_KEY` and
-   `ANTHROPIC_API_KEY` as secrets.
-2. Copy `examples/rex-review.yml` into the target repo.
-3. Branch protection on the default branch → require the `rex` check.
+   repos that run the workflow. Store `REX_APP_ID` + `REX_APP_PRIVATE_KEY` as secrets.
+2. Claude auth — pick one secret:
+   - `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` (uses your Claude Pro/Max plan,
+     no per-token charge, but shares your personal rate limits), or
+   - `ANTHROPIC_API_KEY` (Console key — separate billing, easier to scope/rotate; better
+     for shared/high-volume CI).
+3. Copy `examples/rex-review.yml` into the target repo.
+4. Branch protection on the default branch → require the `rex` check.
 
 **Forked PRs:** fork PRs get a read-only token and no secrets. Running rex on untrusted
 fork code with secrets needs `pull_request_target` (injection risk). Fine for private
