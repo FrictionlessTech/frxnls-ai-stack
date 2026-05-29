@@ -67,7 +67,7 @@ Commit, push, then `marketplace update` + `plugin update` as above.
 `examples/rex-review.yml` is a reference workflow that runs `frxnls:rex-code-reviewer`
 on every PR under a **bot identity**, so it can post a real review (GitHub blocks you
 from formally reviewing your own PR). Copy it to `.github/workflows/` in the repo you
-want reviewed.
+want reviewed. **Step-by-step setup: [SETUP.md](SETUP.md).**
 
 **Why a bot:** a review's identity = the token's owner. Run rex under your own token
 and GitHub returns 422 on `APPROVE`/`REQUEST_CHANGES`. A GitHub App (or the built-in
