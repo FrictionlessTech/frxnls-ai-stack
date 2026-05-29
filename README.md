@@ -61,3 +61,53 @@ claude plugin update frxnls@frxnls   # qualified name required; plain `frxnls` e
 - New agent: `frxnls/agents/<name>.md`
 
 Commit, push, then `marketplace update` + `plugin update` as above.
+
+## CI: Rex as a PR-gating bot
+
+`examples/rex-review.yml` is a reference workflow that runs `frxnls:rex-code-reviewer`
+on every PR under a **bot identity**, so it can post a real review (GitHub blocks you
+from formally reviewing your own PR). Copy it to `.github/workflows/` in the repo you
+want reviewed.
+
+**Why a bot:** a review's identity = the token's owner. Run rex under your own token
+and GitHub returns 422 on `APPROVE`/`REQUEST_CHANGES`. A GitHub App (or the built-in
+`github-actions[bot]`) is a different actor, so the review is allowed.
+
+**Don't gate on the review state** — gate on the **job exit code** as a required status
+check. The workflow writes `VERDICT=...` and exits non-zero on `REQUEST_CHANGES`; mark
+that job required in branch protection to block merges.
+
+**Setup:**
+1. Create a GitHub App (perms: Pull requests RW, Contents RO). Install it on the org +
+   repos that run the workflow. Store `REX_APP_ID` + `REX_APP_PRIVATE_KEY` and
+   `ANTHROPIC_API_KEY` as secrets.
+2. Copy `examples/rex-review.yml` into the target repo.
+3. Branch protection on the default branch → require the `rex` check.
+
+**Forked PRs:** fork PRs get a read-only token and no secrets. Running rex on untrusted
+fork code with secrets needs `pull_request_target` (injection risk). Fine for private
+org repos (internal PRs only); for public repos, gate forks behind a label or manual
+dispatch.
+
+### Cross-org access (App owned in one org, repo in another)
+
+A GitHub App's **owner** and its **install location** are independent. You do not "share"
+an App across orgs — you **install** it on each org where you have admin rights,
+regardless of which org owns it. So a Rex App registered under **Forked Up** can be
+installed onto **FrictionlessTech** and granted access to `frxnls-ai-stack`.
+
+Two access needs, don't conflate them:
+- **Posting the review** — the App is installed on the repo *running the workflow*; its
+  token posts there. Same-org, no cross-org issue.
+- **Reading the private `frxnls-ai-stack`** (to `plugin install` it) — that's the only
+  cross-org part. Pick one:
+  1. **Install the Rex App on FrictionlessTech too**, select `frxnls-ai-stack`, and mint a
+     token scoped to *that* installation (`actions/create-github-app-token` with
+     `owner: FrictionlessTech`, `repositories: frxnls-ai-stack`). A token is per-installation —
+     one token can't span both orgs, so you mint a second one for the read.
+  2. **Sidestep cross-org entirely** (simplest): either **vendor** the agent file into the
+     reviewed repo (`.claude/agents/rex-code-reviewer.md`, option (b) in the workflow), or
+     make `frxnls-ai-stack` **public** so no token is needed to install the plugin.
+
+Org owners installing an App bypass the org's third-party-app access policy, so no extra
+allowlisting is needed when you admin both orgs.

@@ -1,0 +1,83 @@
+# Rex PR Review — reference workflow
+#
+# Copy to `.github/workflows/rex-review.yml` IN THE REPO YOU WANT REVIEWED.
+# Runs the frxnls:rex-code-reviewer agent as a bot identity so it can post a
+# real review (not blocked by GitHub's "can't review your own PR" rule), then
+# gates merge on the job exit code via a required status check.
+#
+# Required secrets (repo or org):
+#   ANTHROPIC_API_KEY                  - Claude API key
+#   REX_APP_ID, REX_APP_PRIVATE_KEY    - GitHub App creds (see README "CI" section)
+# If you skip the App and use the built-in GITHUB_TOKEN, the reviewer shows as
+# github-actions[bot] and its approval may not satisfy "required reviewers" —
+# gate on the exit code (below) instead.
+
+name: Rex PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    # paths: ["src/**", "packages/**"]   # optional: limit what triggers a run
+
+concurrency:
+  group: rex-${{ github.event.pull_request.number }}
+  cancel-in-progress: true               # newer push supersedes an in-flight review
+
+permissions:
+  contents: read
+  pull-requests: write                   # post review + inline comments
+
+jobs:
+  rex:
+    # Skip drafts unless explicitly marked ready
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                 # full history so rex can diff vs base
+
+      # --- bot identity: GitHub App (recommended) ---
+      # Mints a short-lived token scoped to this repo's installation.
+      - uses: actions/create-github-app-token@v1
+        id: bot
+        with:
+          app-id: ${{ secrets.REX_APP_ID }}
+          private-key: ${{ secrets.REX_APP_PRIVATE_KEY }}
+
+      - uses: oven-sh/setup-bun@v2
+      - run: npm i -g @anthropic-ai/claude-code
+
+      # rex agent source. Two choices — pick ONE:
+      #
+      # (a) Install the frxnls plugin from FrictionlessTech (private → needs a
+      #     token with read access to that repo; see the README cross-org note).
+      - name: Install frxnls plugin
+        env:
+          GH_TOKEN: ${{ secrets.FRXNLS_READ_TOKEN || steps.bot.outputs.token }}
+        run: |
+          claude plugin marketplace add FrictionlessTech/frxnls-ai-stack
+          claude plugin install frxnls@frxnls --scope user
+      #
+      # (b) Simpler / no cross-org token: vendor the agent into the reviewed
+      #     repo at .claude/agents/rex-code-reviewer.md and delete step (a).
+
+      - name: Run Rex
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ steps.bot.outputs.token }}   # gh posts the review AS the bot
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          claude -p "Use the frxnls:rex-code-reviewer agent to review PR #$PR in this repo. \
+            Post the hybrid review (summary comment + inline comments). \
+            Then write exactly 'VERDICT=APPROVE' or 'VERDICT=REQUEST_CHANGES' to rex-verdict.txt." \
+            --allowedTools "Bash,Read,Grep,Glob,Agent,WebFetch" \
+            --dangerously-skip-permissions
+
+      - name: Gate merge on verdict
+        run: |
+          if grep -q "VERDICT=REQUEST_CHANGES" rex-verdict.txt; then
+            echo "::error::Rex requested changes — see PR review."
+            exit 1
+          fi
+          echo "Rex approved."
