@@ -48,19 +48,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: npm i -g @anthropic-ai/claude-code
 
-      # rex agent source. Two choices — pick ONE:
-      #
-      # (a) Install the frxnls plugin from FrictionlessTech (private → needs a
-      #     token with read access to that repo; see the README cross-org note).
+      # rex agent source. FrictionlessTech/frxnls-ai-stack is PUBLIC, so the
+      # plugin installs with no token — no cross-org auth needed.
       - name: Install frxnls plugin
-        env:
-          GH_TOKEN: ${{ secrets.FRXNLS_READ_TOKEN || steps.bot.outputs.token }}
         run: |
           claude plugin marketplace add FrictionlessTech/frxnls-ai-stack
           claude plugin install frxnls@frxnls --scope user
-      #
-      # (b) Simpler / no cross-org token: vendor the agent into the reviewed
-      #     repo at .claude/agents/rex-code-reviewer.md and delete step (a).
+      # Alternative: vendor the agent into the reviewed repo at
+      # .claude/agents/rex-code-reviewer.md and delete this step.
 
       - name: Run Rex
         env:

@@ -91,23 +91,25 @@ dispatch.
 
 ### Cross-org access (App owned in one org, repo in another)
 
+**This repo is public**, so installing the plugin in CI needs no token — the cross-org
+read concern below is moot. The notes remain for reference (and if it ever goes private).
+
 A GitHub App's **owner** and its **install location** are independent. You do not "share"
 an App across orgs — you **install** it on each org where you have admin rights,
 regardless of which org owns it. So a Rex App registered under **Forked Up** can be
-installed onto **FrictionlessTech** and granted access to `frxnls-ai-stack`.
+installed onto **FrictionlessTech** and granted access to its repos.
 
 Two access needs, don't conflate them:
 - **Posting the review** — the App is installed on the repo *running the workflow*; its
   token posts there. Same-org, no cross-org issue.
-- **Reading the private `frxnls-ai-stack`** (to `plugin install` it) — that's the only
-  cross-org part. Pick one:
+- **Reading `frxnls-ai-stack`** (to `plugin install` it) — only a concern if the repo is
+  private. Since it's public now, no token is required. If you later make it private:
   1. **Install the Rex App on FrictionlessTech too**, select `frxnls-ai-stack`, and mint a
      token scoped to *that* installation (`actions/create-github-app-token` with
      `owner: FrictionlessTech`, `repositories: frxnls-ai-stack`). A token is per-installation —
      one token can't span both orgs, so you mint a second one for the read.
-  2. **Sidestep cross-org entirely** (simplest): either **vendor** the agent file into the
-     reviewed repo (`.claude/agents/rex-code-reviewer.md`, option (b) in the workflow), or
-     make `frxnls-ai-stack` **public** so no token is needed to install the plugin.
+  2. Or **vendor** the agent file into the reviewed repo
+     (`.claude/agents/rex-code-reviewer.md`, the alternative in the workflow).
 
 Org owners installing an App bypass the org's third-party-app access policy, so no extra
 allowlisting is needed when you admin both orgs.
