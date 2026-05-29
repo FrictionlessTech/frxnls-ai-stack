@@ -24,7 +24,7 @@ frxnls/                           # the plugin
 | Skill | `qa`                | `/frxnls:qa`               | Test a running web app in a real browser, then fix and verify bugs |
 | Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
 | Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
-| Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — with quote-the-line gate + LLM-security lens |
+| Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — quote-the-line gate, LLM-security lens, hybrid inline comments + summary with severity badges |
 
 ## Install
 

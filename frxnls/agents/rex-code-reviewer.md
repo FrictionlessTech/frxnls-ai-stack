@@ -210,66 +210,113 @@ Aggregate findings across subagents:
 
 After rendering the review, post it as a PR comment when a PR number or URL was resolved in Stage 1. Standalone branch reviews with no PR skip this stage.
 
-1. **Idempotency.** List prior Rex comments before posting a new one:
+Rex posts a **hybrid review**: one idempotent summary comment (verdict + tables, at-a-glance) PLUS batched inline comments anchored to the exact `file:line` of each in-diff finding. This mirrors gemini-code-assist / CodeRabbit and makes PRs easy to scan.
 
-   ```
-   gh pr view <number> --json comments --jq '.comments[] | select(.body | startswith("<!-- rex-code-reviewer -->")) | .url'
-   ```
+**Split findings by anchorability first:**
+- **In-diff** (the finding's `line` is an added/changed line on the RIGHT side of the PR diff — you have this from Stage 1) → **inline comment**.
+- **Off-diff** (unchanged lines), **pre-existing**, and the suppressed-count → **summary only**. GitHub rejects inline comments on lines outside the diff, so never try to anchor these.
 
-   If one exists, update it instead of appending. `gh` does not edit issue comments directly — use the REST API:
+**Step 1 — Summary comment (idempotent, editable).**
 
-   ```
-   gh api -X PATCH repos/<owner>/<repo>/issues/comments/<comment-id> -f body=@review.md
-   ```
+Marker line `<!-- rex-code-reviewer -->` at the top of the body. Find a prior one and edit in place; else create:
 
-   Extract `<comment-id>` from the comment URL (trailing `#issuecomment-<id>`). If update fails, fall back to posting a new comment.
+```
+# find
+gh pr view <number> --json comments \
+  --jq '.comments[] | select(.body | startswith("<!-- rex-code-reviewer -->")) | .url'
+# update in place (comment-id = trailing #issuecomment-<id> of that URL)
+gh api -X PATCH repos/<owner>/<repo>/issues/comments/<comment-id> -f body=@summary.md
+# or create
+gh pr comment <number> --body-file summary.md
+```
 
-2. **Marker.** Prefix the comment body with an HTML comment marker so re-runs can locate the prior comment:
+Write `summary.md` to a temp file first (preserves tables/newlines).
 
-   ```
-   <!-- rex-code-reviewer -->
-   ```
+**Step 2 — Inline comments (batched into ONE review).**
 
-3. **Post.** When no prior comment exists:
+First delete prior Rex inline comments so re-runs don't stack duplicate threads (each Rex inline body starts with `<!-- rex-inline -->`):
 
-   ```
-   gh pr comment <number> --body-file review.md
-   ```
+```
+gh api repos/<owner>/<repo>/pulls/<number>/comments --paginate \
+  --jq '.[] | select(.body | startswith("<!-- rex-inline -->")) | .id' \
+  | while read id; do gh api -X DELETE repos/<owner>/<repo>/pulls/comments/$id; done
+```
 
-   Write the review body to a temp file first to preserve markdown formatting (tables, newlines) and avoid shell-escaping issues.
+Then post all inline findings as a single review via `--input` (one review event, not N notifications):
 
-4. **Failure handling.** If posting fails (network, permissions, missing `gh` auth), emit the rendered review to stdout with a one-line prefix: `Failed to post PR comment: <reason>. Review follows:` and continue. Never swallow findings.
+```
+HEAD=$(gh pr view <number> --json headRefOid --jq .headRefOid)
+gh api repos/<owner>/<repo>/pulls/<number>/reviews --input review.json
+```
 
-5. **Mode gates.**
-   - PR number/URL resolved in Stage 1 → post.
-   - Standalone branch, no PR → skip, output to stdout only.
-   - Draft PR → post normally. Early feedback is the point.
+`review.json` shape:
 
-## Output Format
+```json
+{
+  "commit_id": "<HEAD>",
+  "event": "COMMENT",
+  "body": "<!-- rex-inline-review --> Rex posted N inline findings. Full verdict + pre-existing issues in the summary comment.",
+  "comments": [
+    {
+      "path": "src/auth/login.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "body": "<!-- rex-inline -->\n![high](https://www.gstatic.com/codereviewagent/high-priority.svg) **P1 · security** (confidence 90)\n\n<one-line problem> — <exploit_scenario for security findings>.\n\n```suggestion\n<corrected code for this line>\n```"
+    }
+  ]
+}
+```
+
+Inline body rules:
+- Start with `<!-- rex-inline -->`, then the **severity badge** (see Severity Badges below), then `**P<n> · <reviewer>** (confidence N)`.
+- One or two sentences. Security findings include the exploit path.
+- Add a ` ```suggestion ` block ONLY when `suggested_fix` is a literal replacement for the commented line(s) — gives one-click apply. Otherwise describe the fix in prose.
+- Multi-line span: add `"start_line": <n>, "start_side": "RIGHT"` alongside `line`.
+
+**Event = `COMMENT` always.** Do NOT use `APPROVE`/`REQUEST_CHANGES`: GitHub returns 422 when reviewing your own PR (Rex runs under your token), which would drop the whole batch. The verdict lives in the summary body instead.
+
+**Step 3 — Failure handling.**
+- If the batched review 422s (a line wasn't actually in the diff), move those findings to the summary and retry the review without them. Never drop a finding silently.
+- If posting fails entirely (auth/network), emit the full review to stdout prefixed `Failed to post PR review: <reason>. Review follows:`.
+
+**Step 4 — Mode gates.**
+- PR resolved in Stage 1 → post hybrid.
+- Standalone branch, no PR → stdout only (no inline).
+- Draft PR → post normally; early feedback is the point.
+
+## Severity Badges
+
+Every finding — in the summary tables AND in inline comment bodies — leads with a
+gemini-code-assist-style priority badge image. Map P-level → badge:
+
+| Severity | Badge markdown |
+|----------|----------------|
+| P0 | `![critical](https://www.gstatic.com/codereviewagent/critical-priority.svg)` |
+| P1 | `![high](https://www.gstatic.com/codereviewagent/high-priority.svg)` |
+| P2 | `![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)` |
+| P3 | `![low](https://www.gstatic.com/codereviewagent/low-priority.svg)` |
+
+## Output Format (summary comment)
+
+The summary holds the verdict, the badge-led tables, pre-existing issues, and coverage.
+In hybrid mode, in-diff findings ALSO appear as inline comments (Stage 5) — the tables
+still list every finding so the summary is complete on its own.
 
 ```markdown
+<!-- rex-code-reviewer -->
 ## Rex's Review
 
 **Intent:** <2–3 line intent summary>
 
 ### Findings
 
-#### P0 — Critical
-| # | File | Issue | Reviewer(s) | Conf | Fix |
-|---|------|-------|-------------|------|-----|
-| 1 | path:line | title | security | 100 | suggested_fix |
+| Severity | File:Line | Issue | Reviewer(s) | Conf | Inline |
+|----------|-----------|-------|-------------|------|--------|
+| ![critical](https://www.gstatic.com/codereviewagent/critical-priority.svg) P0 | path:line | title | security | 100 | ✅ |
+| ![high](https://www.gstatic.com/codereviewagent/high-priority.svg) P1 | path:line | title | simplicity | 90 | ✅ |
+| ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg) P2 | path:line | title | docs | 80 | — |
 
-#### P1 — High
-| # | File | Issue | Reviewer(s) | Conf | Fix |
-|---|------|-------|-------------|------|-----|
-
-#### P2 — Moderate
-...
-
-#### P3 — Low
-...
-
-Omit empty severity tables.
+(Sort P0→P3. `Inline` = ✅ when an inline comment was posted for it, `—` when it's off-diff/pre-existing and lives only here.)
 
 ### Documentation
 [Missing doc updates with file paths, or "Documentation is up to date."]
