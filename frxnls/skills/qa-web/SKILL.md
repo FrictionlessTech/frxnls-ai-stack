@@ -1,6 +1,6 @@
 ---
-name: qa
-description: Systematically QA-test a running web app with a real browser, then fix the bugs found and verify each fix. Use when asked to "qa", "test this site", "find bugs", "test and fix", or "does this work?". Drives a real browser via the Playwright MCP server.
+name: qa-web
+description: Systematically QA-test a running web app in a real browser, then fix the bugs found and verify each fix. Use when asked to "qa the site", "test this web app", "find bugs", "test and fix", or "does this work?" for a WEB app. Drives a real browser via the Playwright MCP server. For an iOS app on a simulator, use qa-mobile-ios instead.
 allowed-tools:
   - Bash
   - Read
@@ -28,7 +28,7 @@ allowed-tools:
   - mcp__plugin_playwright_playwright__browser_tabs
 ---
 
-# /qa: Test → Fix → Verify
+# /qa-web: Test → Fix → Verify
 
 Browser-based QA. Test a running app as a user, document bugs with screenshot
 evidence, fix them at the source, and verify each fix. Adapted from Garry Tan's

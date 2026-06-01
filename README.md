@@ -10,7 +10,8 @@ Miguel's personal Claude Code stack — skills and agents published under the
 frxnls/                           # the plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
-│   ├── qa/SKILL.md                          # /frxnls:qa — browser QA via Playwright MCP
+│   ├── qa-web/SKILL.md                      # /frxnls:qa-web — browser QA via Playwright MCP
+│   ├── qa-mobile-ios/SKILL.md               # /frxnls:qa-mobile-ios — iOS Simulator QA via serve-sim
 │   ├── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
 │   ├── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
 │   └── expo-worktree-dev/SKILL.md           # /frxnls:expo-worktree-dev — give the current worktree its own Expo sim+server
@@ -24,7 +25,8 @@ frxnls/                           # the plugin
 
 | Type  | Name                | Invoke                     | What it does |
 |-------|---------------------|----------------------------|--------------|
-| Skill | `qa`                | `/frxnls:qa`               | Test a running web app in a real browser, then fix and verify bugs |
+| Skill | `qa-web`            | `/frxnls:qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
+| Skill | `qa-mobile-ios`     | `/frxnls:qa-mobile-ios`    | QA an iOS app on the Simulator — drives it via [serve-sim](https://github.com/EvanBacon/serve-sim) (AX tree + tap/gesture/type, device logs), finds bugs with screenshot evidence, fixes at the RN source, re-verifies |
 | Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
 | Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
 | Skill | `expo-worktree-dev` | `/frxnls:expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |

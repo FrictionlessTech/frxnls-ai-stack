@@ -18,7 +18,7 @@ a no-op that reattaches to what's already there.
 
 It's also the "run the app to see/verify it" step for worktree agents (e.g.
 `plan-implementer`): after building a mobile change in a worktree, call this to
-launch it. To QA the running **web** build in a browser, compose with [`qa`](../qa/SKILL.md).
+launch it. To QA the running **web** build in a browser, compose with [`qa-web`](../qa-web/SKILL.md).
 
 ## What it guarantees
 
@@ -165,7 +165,9 @@ Do this before `git worktree remove`, or as cleanup if you notice orphaned
 
 ## Compose with
 
-- [`qa`](../qa/SKILL.md) — once the app is running, QA-test the web build in a real
-  browser. This skill gets it running; `qa` exercises it.
+- [`qa-web`](../qa-web/SKILL.md) — once the app is running, QA-test the web build in
+  a real browser. This skill gets it running; `qa-web` exercises it.
+- [`qa-mobile-ios`](../qa-mobile-ios/SKILL.md) — the iOS counterpart: drives the app
+  on the simulator this skill booted (via serve-sim) to find and fix bugs.
 - Worktree agents (e.g. `plan-implementer`) — call this as the "run the app to
   verify" step after building a mobile change in a worktree.
