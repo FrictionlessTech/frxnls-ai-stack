@@ -43,6 +43,64 @@ frxnls/                           # the plugin
 > and (2) add `mcp__supabase__get_advisors` to the agent's `tools:` frontmatter.
 > When that tool isn't present the agent simply reports "advisors not run."
 
+## Delivery pipeline
+
+The skills and agents compose into one path from idea to merged code. `ship` is the
+orchestrator; everything else is a stage it (or you) calls. Each component is forked
+only where the **tools or risk** genuinely differ — shared knowledge stays in skills.
+
+```
+idea ──▶ plan ───────────▶ ship ──▶ implement ────────────▶ PR ──▶ review ───────▶ QA ─────────────▶ you merge
+         first-principles          plan-implementer               rex-code-reviewer   qa-web /
+         · plan mode               plan-implementer-backend        + Rex CI            qa-mobile-ios
+```
+
+**1 · Shape the work.** `first-principles-brainstorm` to pressure-test an idea, then
+Claude Code plan mode (or a GitHub issue) to define it. `ship` starts from a *defined*
+plan/issue — it doesn't plan for you.
+
+**2 · Orchestrate — `ship`.** Routes each plan/issue to the right implementer and QA,
+sequences them, and **stops before merge** (human gate — it never merges).
+- *Interactive* (default): `/frxnls:ship <plan-or-issue>` — one item or a few, you in the loop.
+- *Batch*: bundles `ship-batch.workflow.js` to implement many **independent** items in
+  parallel (one PR each) via the Workflow tool. Stops at PRs; QA/merge stay interactive.
+
+**3 · Implement — `plan-implementer` / `plan-implementer-backend`.** Take a plan file or
+issue, **isolate git work in their own worktree** (branch-in-place when already in a
+linked worktree, else a self-managed worktree off your main checkout — your tree is
+never disturbed), implement strictly in scope, verify until green, and open a PR
+(`Closes #N`). The **backend** fork adds migration safety: detects the migration tool
+(Drizzle/Prisma/Supabase CLI — no Supabase assumption), **generates** migrations and
+reviews the SQL for data loss, applies them to a **disposable** DB (never prod), and
+enforces RLS/authz + API-contract safety.
+
+**4 · Review — `rex-code-reviewer` + Rex CI.** Rex reviews every PR — locally, or via the
+CI bot ([below](#ci-rex-as-a-pr-gating-bot)).
+
+**5 · QA — `qa-web` / `qa-mobile-ios`.** Web QA drives a real browser (Playwright MCP).
+iOS QA drives the Simulator through [serve-sim](https://github.com/EvanBacon/serve-sim):
+an **AX-tree-driven** observe→act→verify loop (tap/gesture/type by element, device logs
+as the console) with screenshot evidence. Both find bugs, fix at the source, and re-verify.
+
+**Running the app for mobile QA — `expo-worktree-dev`.** Idempotently gives the *current*
+worktree its own Simulator + Expo dev server: a dedicated device named `expo-wt-<branch>`
+(never shared across worktrees) on a free, persisted port. Run it once per worktree and
+several branches run side by side with no sim/port collisions — and `qa-mobile-ios`
+resolves *this* worktree's device by that same name, so it never drives the wrong sim.
+
+```
+# single item, interactive, with human gates
+/frxnls:ship #42
+
+# or hand the work to an implementer directly
+"implement the plan in .claude/plans/add-orders.md"   →  plan-implementer(-backend)
+
+# two branches on two simulators, then QA one of them
+/frxnls:expo-worktree-dev   # in worktree A   (boots expo-wt-A)
+/frxnls:expo-worktree-dev   # in worktree B   (boots expo-wt-B)
+/frxnls:qa-mobile-ios       # in worktree A   (locks onto expo-wt-A)
+```
+
 ## Install
 
 This repo *is* the marketplace, served from GitHub. On any machine:
@@ -52,7 +110,7 @@ claude plugin marketplace add FrictionlessTech/frxnls-ai-stack --scope user
 claude plugin install frxnls@frxnls --scope user
 ```
 
-(Repo is private — requires `gh`/git auth with access to the org.)
+(Repo is public — no auth needed to add the marketplace.)
 
 ## Editing components
 
