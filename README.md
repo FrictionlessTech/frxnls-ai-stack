@@ -12,9 +12,12 @@ frxnls/                           # the plugin
 ├── skills/
 │   ├── qa/SKILL.md                          # /frxnls:qa — browser QA via Playwright MCP
 │   ├── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
-│   └── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
+│   ├── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
+│   └── expo-worktree-dev/SKILL.md           # /frxnls:expo-worktree-dev — give the current worktree its own Expo sim+server
 └── agents/
-    └── rex-code-reviewer.md      # frxnls:rex-code-reviewer — PR review agent
+    ├── rex-code-reviewer.md      # frxnls:rex-code-reviewer — PR review agent
+    ├── plan-implementer.md       # frxnls:plan-implementer — executes a plan/issue → PR
+    └── plan-implementer-backend.md # frxnls:plan-implementer-backend — backend/DB-safe executor → PR
 ```
 
 ## Components
@@ -24,7 +27,17 @@ frxnls/                           # the plugin
 | Skill | `qa`                | `/frxnls:qa`               | Test a running web app in a real browser, then fix and verify bugs |
 | Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
 | Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
+| Skill | `expo-worktree-dev` | `/frxnls:expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |
 | Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — quote-the-line gate, LLM-security lens, hybrid inline comments + summary with severity badges |
+| Agent | `plan-implementer` | `frxnls:plan-implementer` | Executes an already-defined plan file or GitHub issue end-to-end on Sonnet — auto-detects the source, isolates git work (own worktree off the main checkout), implements strictly in-scope, verifies until green, opens a PR (`Closes #N`), and reports back |
+| Agent | `plan-implementer-backend` | `frxnls:plan-implementer-backend` | Backend/DB-focused fork of `plan-implementer` — detects the project's migration tool (Drizzle/Prisma/Supabase CLI, no Supabase assumption), **generates** migrations and reviews the SQL for data loss, verifies against a **disposable** DB (never prod), enforces RLS/authz + contract-safety, opens a PR. Optional Supabase advisor lints (see below) |
+
+> **Optional — Supabase advisor lints for `plan-implementer-backend`.** The agent
+> is portable and assumes no Supabase by default. To have it also run Supabase
+> security/performance advisors during verification: (1) add a Supabase MCP server
+> to your config **named `supabase`** (so its tools resolve as `mcp__supabase__*`),
+> and (2) add `mcp__supabase__get_advisors` to the agent's `tools:` frontmatter.
+> When that tool isn't present the agent simply reports "advisors not run."
 
 ## Install
 
