@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "frxnls",
-      "description": "Frictionless personal toolkit: qa skill and rex-code-reviewer agent.",
+      "description": "Frictionless personal toolkit: skills and agents for the plan → implement → review → QA delivery pipeline.",
       "source": "./frxnls",
       "category": "productivity"
     }
