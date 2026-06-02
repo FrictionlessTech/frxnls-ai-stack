@@ -15,7 +15,8 @@ frxnls/                           # the plugin
 │   ├── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
 │   ├── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
 │   ├── expo-worktree-dev/SKILL.md           # /frxnls:expo-worktree-dev — give the current worktree its own Expo sim+server
-│   └── ship/                                # /frxnls:ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
+│   ├── ship/                                # /frxnls:ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
+│   └── teardown/SKILL.md                    # /frxnls:teardown — retire a task's worktree/branch (+ sim) post-merge
 └── agents/
     ├── rex-code-reviewer.md      # frxnls:rex-code-reviewer — PR review agent
     ├── plan-implementer.md       # frxnls:plan-implementer — executes a plan/issue → PR
@@ -31,9 +32,10 @@ frxnls/                           # the plugin
 | Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
 | Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
 | Skill | `expo-worktree-dev` | `/frxnls:expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |
-| Skill | `ship` | `/frxnls:ship` | Orchestrate a defined plan/issue → reviewed PR: routes to `plan-implementer` vs `-backend`, runs matching QA (`qa-web` / `qa-mobile-ios`), surfaces Rex's review, **stops before merge**. Bundles `ship-batch.workflow.js` for parallel batch runs |
+| Skill | `ship` | `/frxnls:ship` | Orchestrate a defined plan/issue → reviewed PR: **sets up the workspace (asks branch vs worktree)**, routes to `plan-implementer` vs `-backend`, runs matching QA (`qa-web` / `qa-mobile-ios`), surfaces Rex's review, keeps it alive for revisions, **stops before merge**. Bundles `ship-batch.workflow.js` for batch runs |
+| Skill | `teardown` | `/frxnls:teardown` | Retire a finished task's workspace — remove its linked worktree, optionally delete the local branch, shut down its `expo-wt-*` sim. Run after the PR merges/aborts; never auto-runs, never touches the main checkout |
 | Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — quote-the-line gate, LLM-security lens, hybrid inline comments + summary with severity badges |
-| Agent | `plan-implementer` | `frxnls:plan-implementer` | Executes an already-defined plan file or GitHub issue end-to-end on Sonnet — auto-detects the source, isolates git work (own worktree off the main checkout), implements strictly in-scope, verifies until green, opens a PR (`Closes #N`), and reports back |
+| Agent | `plan-implementer` | `frxnls:plan-implementer` | Executes an already-defined plan file or GitHub issue end-to-end on Sonnet — auto-detects the source, **works on the branch/worktree the caller set up** (never creates/destroys one; refuses on the trunk), implements strictly in-scope, verifies until green, opens **or updates** a PR (`Closes #N`), and reports back |
 | Agent | `plan-implementer-backend` | `frxnls:plan-implementer-backend` | Backend/DB-focused fork of `plan-implementer` — detects the project's migration tool (Drizzle/Prisma/Supabase CLI, no Supabase assumption), **generates** migrations and reviews the SQL for data loss, verifies against a **disposable** DB (never prod), enforces RLS/authz + contract-safety, opens a PR. Optional Supabase advisor lints (see below) |
 
 > **Optional — Supabase advisor lints for `plan-implementer-backend`.** The agent
@@ -50,7 +52,7 @@ orchestrator; everything else is a stage it (or you) calls. Each component is fo
 only where the **tools or risk** genuinely differ — shared knowledge stays in skills.
 
 ```
-idea ──▶ plan ───────────▶ ship ──▶ implement ────────────▶ PR ──▶ review ───────▶ QA ─────────────▶ you merge
+idea ──▶ plan ───────────▶ ship ──▶ implement ────────────▶ PR ──▶ review ───────▶ QA ─────────────▶ you merge ──▶ /teardown
          first-principles          plan-implementer               rex-code-reviewer   qa-web /
          · plan mode               plan-implementer-backend        + Rex CI            qa-mobile-ios
 ```
@@ -59,17 +61,20 @@ idea ──▶ plan ───────────▶ ship ──▶ implemen
 Claude Code plan mode (or a GitHub issue) to define it. `ship` starts from a *defined*
 plan/issue — it doesn't plan for you.
 
-**2 · Orchestrate — `ship`.** Routes each plan/issue to the right implementer and QA,
-sequences them, and **stops before merge** (human gate — it never merges).
+**2 · Orchestrate — `ship`.** Owns the **workspace**: recommends branch-in-place vs a new
+worktree and **confirms with you**, creates it, routes the work to the right implementer
+and QA, keeps the workspace alive through revisions, and **stops before merge** (human
+gate — it never merges).
 - *Interactive* (default): `/frxnls:ship <plan-or-issue>` — one item or a few, you in the loop.
-- *Batch*: bundles `ship-batch.workflow.js` to implement many **independent** items in
-  parallel (one PR each) via the Workflow tool. Stops at PRs; QA/merge stay interactive.
+- *Batch*: bundles `ship-batch.workflow.js` to prepare a worktree+branch per item and
+  implement many **independent** items in parallel (one PR each). Stops at PRs; QA/merge stay interactive.
 
 **3 · Implement — `plan-implementer` / `plan-implementer-backend`.** Take a plan file or
-issue, **isolate git work in their own worktree** (branch-in-place when already in a
-linked worktree, else a self-managed worktree off your main checkout — your tree is
-never disturbed), implement strictly in scope, verify until green, and open a PR
-(`Closes #N`). The **backend** fork adds migration safety: detects the migration tool
+issue and **work on the branch/worktree the orchestrator set up** — they never create or
+destroy a workspace, and refuse to commit on the trunk. They implement strictly in scope,
+verify until green, and open **or update** a PR (`Closes #N`) — re-invoking on the same
+branch pushes a revision to the existing PR. The **backend** fork adds migration safety:
+detects the migration tool
 (Drizzle/Prisma/Supabase CLI — no Supabase assumption), **generates** migrations and
 reviews the SQL for data loss, applies them to a **disposable** DB (never prod), and
 enforces RLS/authz + API-contract safety.
@@ -87,6 +92,11 @@ worktree its own Simulator + Expo dev server: a dedicated device named `expo-wt-
 (never shared across worktrees) on a free, persisted port. Run it once per worktree and
 several branches run side by side with no sim/port collisions — and `qa-mobile-ios`
 resolves *this* worktree's device by that same name, so it never drives the wrong sim.
+
+**6 · Retire — `teardown`.** Implementers and `ship` never auto-clean, so the branch/worktree
+survives PR + QA for revisions. Once the PR is merged or abandoned, `/frxnls:teardown` removes
+the worktree, optionally deletes the local branch, and shuts down its `expo-wt-*` sim — never
+the main checkout.
 
 ```
 # single item, interactive, with human gates
