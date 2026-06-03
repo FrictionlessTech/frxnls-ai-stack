@@ -10,6 +10,21 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.8.0] — 2026-06-03
+
+### Added
+- **`fx-debug`** skill — systematically find a bug's root cause, then fix it.
+  Investigates before fixing (causal-chain gate, prediction-tested hypotheses,
+  smart escalation) and optionally implements a test-first fix. Adapted from
+  EveryInc's compound-engineering `ce-debug`, retargeted to the frxnls stack:
+  it checks `docs/solutions/` first (dispatching `fx-learnings-research`) so a
+  documented bug is a lookup not a re-investigation, drives web repro through
+  the Playwright MCP / `fx-qa-web` and iOS through serve-sim /
+  `fx-qa-mobile-ios`, and hands a fixed branch off via `gh` + `fx-compound`
+  rather than the ce-only commit/brainstorm ecosystem. Ships with three
+  reference files (`anti-patterns`, `investigation-techniques`,
+  `defense-in-depth`).
+
 ## [0.7.0] — 2026-06-03
 
 ### Changed
