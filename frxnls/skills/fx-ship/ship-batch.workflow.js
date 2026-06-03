@@ -1,4 +1,4 @@
-// Batch implementer for the frxnls `ship` skill.
+// Batch implementer for the frxnls `fx-ship` skill.
 // Run via the Workflow tool: pass this file's contents as `script` and the list of
 // work items as `args`, e.g. args = ["#40", "#41", ".claude/plans/add-orders.md"].
 //
@@ -10,7 +10,7 @@
 //      the branch it was handed and opens its own PR.
 //
 // It STOPS at PRs: no QA, no merge. Rex CI reviews each PR on open. The worktrees
-// PERSIST (for revisions) — retire each later with /frxnls:teardown.
+// PERSIST (for revisions) — retire each later with /frxnls:fx-teardown.
 // Requires the frxnls plugin installed (agentType resolves the implementer agents).
 // Untested end-to-end — exercise on real, independent items first.
 
@@ -83,5 +83,5 @@ Report the absolute worktree path, the branch name, the chosen implementer, and 
 )
 
 const prs = results.filter(Boolean)
-log(`ship-batch done: ${prs.length}/${items.length} processed. Rex CI reviews each PR on open; run qa-web / qa-mobile-ios interactively, and /frxnls:teardown to retire each worktree.`)
+log(`ship-batch done: ${prs.length}/${items.length} processed. Rex CI reviews each PR on open; run fx-qa-web / fx-qa-mobile-ios interactively, and /frxnls:fx-teardown to retire each worktree.`)
 return { items: items.length, prs }

@@ -1,6 +1,6 @@
 ---
-name: first-principles-brainstorm
-description: An adversarial interviewer that stress-tests ideas and projects using first principles thinking (Musk/Thiel style) combined with ruthless 80/20 simplicity (DHH style). Use this skill whenever the user wants to brainstorm, plan, think through, or pressure-test an idea, project, feature, or business decision. Also trigger when the user says things like "help me think through X", "what do you think about building X", "I'm considering X", "let's plan X", or "sanity check this". The goal is NOT to be a yes-man — it's to surface the hard questions, kill complexity early, and find the simplest path to the real value.
+name: fx-brainstorm
+description: An adversarial interviewer that stress-tests ideas and projects using first principles thinking (Musk/Thiel style) combined with ruthless 80/20 simplicity (DHH style). Use this skill whenever the user wants to brainstorm, plan, think through, or pressure-test an idea, project, feature, or business decision. Also trigger when the user says things like "help me think through X", "what do you think about building X", "I'm considering X", "let's plan X", or "sanity check this". The goal is NOT to be a yes-man — it's to surface the hard questions, kill complexity early, and find the simplest path to the real value. When the dialogue is worth preserving, it can emit a structured requirements doc to docs/brainstorms/ that fx-plan consumes as its origin (the WHAT → HOW handoff).
 ---
 
 # First Principles Brainstorm
@@ -154,17 +154,95 @@ The one uncomfortable thing to answer before anything else.
 ONE concrete real-world action to take next — not "go build it." (Watch a user, email a named person, ship the 1-day wedge, run the one test that could kill it.)
 ```
 
-**Offer to persist it.** After delivering the synthesis, ask how they want it saved (one question, three options):
+**Offer to persist it.** First decide whether a durable doc is even warranted: skip
+it when the dialogue only produced brief alignment with nothing novel to preserve —
+the decision can flow straight to `fx-plan`, a commit message, or `fx-compound`
+without a brainstorm artifact in the middle. When the brainstorm surfaced real scope,
+framing, or acceptance criteria worth carrying forward, ask how to save it (one
+`AskUserQuestion`; fall back to numbered chat options if unavailable):
 
-- **Save to a file** — write the synthesis to `docs/brainstorm-<slug>-<date>.md` in the current project (create `docs/` if missing).
-- **Create a GitHub issue** — open an issue in the current repo with the synthesis as the body. Use a title like the Core Problem line. Run:
+- **Requirements doc** (recommended) — write a structured requirements document to
+  `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md` (see **Requirements Document**
+  below). This is the document-based handoff: `fx-plan` discovers it and carries it as
+  the plan's `origin:`. After writing, offer to hand straight to `/frxnls:fx-plan`.
+- **GitHub issue** — open an issue in the current repo with the synthesis as the body
+  (title from the Core Problem line). Write the synthesis to a temp file first
+  (preserves markdown), then:
   ```bash
   gh issue create --title "Brainstorm: <core problem>" --body-file <tmpfile>
   ```
-  Write the synthesis to a temp file first (preserves markdown). If the repo uses labels, add a fitting one (e.g. `--label idea`); skip if unsure. Report the issue URL `gh` prints.
+  Add a fitting label if the repo uses them (e.g. `--label idea`); skip if unsure.
+  `fx-plan` / `fx-ship` can take the issue number directly. Report the URL `gh` prints.
+- **Quick note** — dump the synthesis as-is to `docs/brainstorm-<slug>-<date>.md` (no
+  IDs), for a light brainstorm not yet headed to planning.
 - **Don't save** — leave it in the chat only.
 
-Only act after they choose. If `gh` isn't authenticated or the dir isn't a repo, say so and fall back to the file option.
+Only act after they choose. If `gh` isn't authenticated or the dir isn't a repo, say
+so and fall back to a file option.
+
+---
+
+## Requirements Document
+
+The durable handoff to `fx-plan` — it captures **WHAT** to build so the planner never
+has to invent user behavior, scope, or success criteria. Markdown only.
+
+**File:** `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md` (`mkdir -p
+docs/brainstorms/` if missing). `<topic>` is a kebab-case slug. Frontmatter carries
+the stable fields `fx-plan` keys on:
+
+```yaml
+---
+date: YYYY-MM-DD      # ISO 8601, ASCII digits
+topic: <kebab-slug>   # subject; used in the filename and resume detection
+---
+```
+
+**Match depth to content** — a sparse brainstorm yields a sparse doc; don't add
+ceremony to make a slim one look substantial. The synthesis you just delivered maps in
+directly: Core Problem → Summary / Problem Frame; The Bet + recommended approach → Key
+Decisions; MVP + approaches → Requirements; Kill List → Scope Boundaries; The Question
+You're Avoiding → Outstanding Questions.
+
+**Hard floor (always present):**
+- **Summary** — what's being proposed, 1-3 lines, forward-looking.
+- **Requirements** (stable `R1.`, `R2.` …) — what must be true about the proposed
+  thing. Group by concern with bold inline headers when they span distinct areas
+  (R-IDs stay continuous across groups; never restart per group). For a very sparse
+  brainstorm (≤3 simple items), plain bullets without IDs are fine — the trigger for
+  R-IDs is whether downstream consumers will reference them.
+
+**Include when material** (only if it carries content not covered elsewhere — a
+placeholder section is worse than an omitted one):
+- **Problem Frame** — the *why*, when it needs paragraphs (backward-looking; don't
+  restate the proposal).
+- **Key Decisions** — opinionated framing choices that constrain the requirements,
+  each named in bold with prose rationale.
+- **Actors** (`A1.` …) — when multiple humans / agents / systems are meaningfully
+  involved. Skip for non-behavioral briefs.
+- **Key Flows** (`F1.` …) — multi-step behavior, with `**Trigger:**` / `**Steps:**` /
+  `**Outcome:**` leader labels. Expected by default for behavioral brainstorms; note
+  the reason if you omit one.
+- **Acceptance Examples** (`AE1.` …) — for any conditional ("When X, Y") requirement,
+  with `**Covers R<n>.**` / `**Given / When / Then**`. This is where ambiguity bites
+  hardest — always include them for behavioral-conditional requirements.
+- **Success Criteria** — metrics or quality / handoff signals the Requirements don't
+  already carry.
+- **Scope Boundaries** — contested scope or tempting non-goals. Split into
+  `### Deferred for later` (eventually, not v1) and `### Outside this product's
+  identity` (positioning) when relevant — the Kill List lands here.
+- **Dependencies / Assumptions** — material upstream dependencies or load-bearing
+  assumptions.
+- **Outstanding Questions** — split `### Resolve Before Planning` (blocks planning)
+  from `### Deferred to Planning` (answer during planning); `fx-plan` reads this split.
+- **Sources / Research** — breadcrumbs that orient the planner (code locations, docs,
+  prior art) — not process exhaust.
+
+**ID & content rules:** stable IDs, never renumbered (gaps from deletions are fine);
+plain prefixes (`R1.`, not `**R1.**`); repo-relative paths only; no process exhaust (no
+"captured at Phase X", no `## Next Steps` pointing at `fx-plan`); no implementation
+details (libraries, schemas, file layouts) unless the brainstorm itself is about a
+technical change. Put `---` between top-level sections for scannability.
 
 ---
 

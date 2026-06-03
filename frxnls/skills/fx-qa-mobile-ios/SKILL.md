@@ -1,6 +1,6 @@
 ---
-name: qa-mobile-ios
-description: Systematically QA-test a running iOS app on the Simulator, then fix the bugs found and verify each fix. Use when asked to "qa the app", "test this on the simulator", "find bugs in the iOS app", "test and fix the mobile app", or "does this screen work?" for an iOS/Expo app. Drives the simulator via serve-sim (accessibility tree + tap/gesture/type + device logs). For a web app use qa-web instead.
+name: fx-qa-mobile-ios
+description: Systematically QA-test a running iOS app on the Simulator, then fix the bugs found and verify each fix. Use when asked to "qa the app", "test this on the simulator", "find bugs in the iOS app", "test and fix the mobile app", or "does this screen work?" for an iOS/Expo app. Drives the simulator via serve-sim (accessibility tree + tap/gesture/type + device logs). For a web app use fx-qa-web instead.
 allowed-tools:
   - Bash
   - Read
@@ -10,9 +10,9 @@ allowed-tools:
   - Write
 ---
 
-# /qa-mobile-ios: Test → Fix → Verify (iOS Simulator)
+# /fx-qa-mobile-ios: Test → Fix → Verify (iOS Simulator)
 
-Native-app QA — the mobile sibling of [`qa-web`](../qa-web/SKILL.md). Test a running
+Native-app QA — the mobile sibling of [`fx-qa-web`](../fx-qa-web/SKILL.md). Test a running
 iOS app as a user, document bugs with screenshot evidence, fix them at the React
 Native source, and verify each fix.
 
@@ -27,7 +27,7 @@ bunx add-skill EvanBacon/serve-sim
 ```
 
 iOS only. To get the app onto a sim first, compose with
-[`expo-worktree-dev`](../expo-worktree-dev/SKILL.md). For web QA, use `qa-web`.
+[`fx-expo-worktree-dev`](../fx-expo-worktree-dev/SKILL.md). For web QA, use `fx-qa-web`.
 
 > Not yet validated against a live Simulator from this repo — endpoints/commands
 > below are from serve-sim's published docs. Trust `npx serve-sim --help` and
@@ -35,7 +35,7 @@ iOS only. To get the app onto a sim first, compose with
 
 ## Driver mapping (serve-sim)
 
-Observe-then-act, like `qa-web`'s snapshot-then-click — but the "snapshot" is the
+Observe-then-act, like `fx-qa-web`'s snapshot-then-click — but the "snapshot" is the
 **AX tree**, and you act by **normalized (0–1) coordinates**. Every command is scoped
 to **this worktree's** device + serve-sim instance — resolve them once in **Step 0**
 into `$UDID`, `$STREAM` (stream port), and `$PREVIEW` (preview port). Never assume
@@ -65,7 +65,7 @@ With multiple worktrees running there are multiple booted sims and multiple serv
 instances on different ports. Pin to **this worktree's** device. Resolution order:
 
 1. **Explicit override** — a device name/UDID given in the prompt wins.
-2. **This worktree's dedicated device** — `expo-worktree-dev` boots a device named
+2. **This worktree's dedicated device** — `fx-expo-worktree-dev` boots a device named
    `expo-wt-<slug>`; derive the *same* slug and resolve its UDID. This device name is
    the shared key between the two skills — both compute it identically:
    ```bash
@@ -103,7 +103,7 @@ Precondition: `curl -s localhost:$STREAM/ax` returns a tree **for our device**. 
 doesn't, stop and say so — do not fall back to another sim or to unit tests (this
 skill is driver-based by definition).
 
-## Modes (mirror qa-web)
+## Modes (mirror fx-qa-web)
 
 - **Diff-aware** (default on a feature branch, no screen named): `git diff "$BASE"...HEAD
   --name-only` → map changed RN files to screens (route/screen files → screens,
@@ -147,9 +147,9 @@ renders inline for the user.
 
 ### Phase 5 — Wrap up
 Health score, "Top 3 Things to Fix", aggregate log errors, metadata (device, OS,
-screens visited, screenshot count). Save `baseline.json` (same shape as `qa-web`).
+screens visited, screenshot count). Save `baseline.json` (same shape as `fx-qa-web`).
 
-## Fix Loop (same discipline as qa-web)
+## Fix Loop (same discipline as fx-qa-web)
 For each fixable bug, severity order:
 - **Locate** the RN source — Grep component names / on-screen strings; Glob
   `screens/`, `components/`, `app/` for the screen.
@@ -158,7 +158,7 @@ For each fixable bug, severity order:
 - **Re-test** — reload via Fast Refresh, re-screenshot, re-check `/ax` and
   `/.sim/logs`; classify `verified` / `best-effort` / `reverted`.
 - **Self-regulation** — every 5 fixes or after any revert, STOP and evaluate before
-  continuing. Hard cap 50 fixes. (See `qa-web` for the full WTF-likelihood rubric.)
+  continuing. Hard cap 50 fixes. (See `fx-qa-web` for the full WTF-likelihood rubric.)
 
 ## Important Rules
 1. **Repro is everything** — every bug needs ≥1 screenshot.
@@ -179,5 +179,5 @@ For each fixable bug, severity order:
 
 ## Compose with
 - **serve-sim skill** — the full driver. Install: `bunx add-skill EvanBacon/serve-sim`.
-- [`expo-worktree-dev`](../expo-worktree-dev/SKILL.md) — boot the app on a per-worktree sim before QA.
-- [`qa-web`](../qa-web/SKILL.md) — the web sibling (same loop, Playwright driver).
+- [`fx-expo-worktree-dev`](../fx-expo-worktree-dev/SKILL.md) — boot the app on a per-worktree sim before QA.
+- [`fx-qa-web`](../fx-qa-web/SKILL.md) — the web sibling (same loop, Playwright driver).

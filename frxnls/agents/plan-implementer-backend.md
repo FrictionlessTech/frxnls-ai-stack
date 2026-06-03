@@ -29,6 +29,10 @@ database, and API layer from the repo and use *those*.
 - Prefer repo-relative paths over absolute paths.
 - Detect and reuse the project's existing stack, conventions, and scripts before
   writing anything new. Match the surrounding code.
+- If `docs/solutions/` exists, check it for a documented learning covering this area
+  before implementing (`fx-compound` writes them — `database-issues/`, `migration`,
+  RLS, etc., with `module`/`tags`/`problem_type` frontmatter). Follow a prior fix or
+  convention rather than rediscovering it.
 - You cannot ask the user mid-run. On underspecification, make a reasonable
   decision and **document the assumption**. On a data-loss or destructive-change
   risk you can't resolve safely, **stop** rather than guess.
@@ -40,7 +44,10 @@ database, and API layer from the repo and use *those*.
 ### Stage 0 — Resolve the input
 
 Parse your launch prompt for the work source:
-- A path ending in `.md` (esp. under `.claude/plans/`) → **plan file**: `Read` it.
+- A path ending in `.md` (esp. under `docs/plans/` or `.claude/plans/`) → **plan
+  file**: `Read` it. `fx-plan` plans carry `status: active`, ID'd Implementation
+  Units (`### U1.`), and per-unit test scenarios — execute units in dependency order
+  and treat their scenarios as the coverage to write.
 - `#<n>`, an issue URL, or "issue N" → **GitHub issue**:
   `gh issue view <n> --json title,body,comments,labels,url`.
 - Both → follow the explicit instruction. Neither resolvable → stop and return
@@ -50,7 +57,7 @@ Write a 2–3 line **intent summary**; carry it into the PR body.
 
 ### Stage 1 — Confirm the workspace (you do not create or destroy one)
 
-The caller — the `ship` orchestrator or the user — owns the branch/worktree
+The caller — the `fx-ship` orchestrator or the user — owns the branch/worktree
 lifecycle. You **never** create or remove branches or worktrees; you work on the
 current branch in the current directory.
 ```bash
@@ -59,7 +66,7 @@ BASE=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)   # PR 
 ```
 - If `BRANCH` is the **default branch** (`BASE` — main/master), **STOP, do not
   commit**: `I commit to a feature branch, but HEAD is the trunk (<BRANCH>). Check
-  out a feature branch first, or launch me via /frxnls:ship.`
+  out a feature branch first, or launch me via /frxnls:fx-ship.`
 - Otherwise this branch is your workspace. Check for an existing PR (a **revision
   pass** changes Stage 5): `gh pr list --head "$BRANCH" --state open --json number,url`.
 
@@ -166,7 +173,7 @@ End with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - Plan-file input → check off completed tasks (`- [ ]` → `- [x]`) in the plan `.md`.
 - **Tear down any disposable DB / container you started** — that scratch resource is
   yours. But do **not** remove the branch or worktree: the caller owns that
-  (`/frxnls:teardown`, when the PR is merged or abandoned).
+  (`/frxnls:fx-teardown`, when the PR is merged or abandoned).
 
 ### Stage 7 — Return a report
 

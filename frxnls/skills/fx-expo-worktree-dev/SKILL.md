@@ -1,5 +1,5 @@
 ---
-name: expo-worktree-dev
+name: fx-expo-worktree-dev
 description: Ensure the CURRENT git worktree has its own dedicated iOS simulator and Expo dev server — idempotently and without colliding with any other worktree's sim or port. Reuses this worktree's sim/bundler if it already has them; otherwise spins up a dedicated sim named for the worktree and allocates a free port. Use when asked to "run the app in this worktree", "spin up a sim for this branch", "preview this worktree", "launch the app here", or when an agent needs to run the app it built in a worktree. macOS + Xcode only.
 allowed-tools:
   - Bash
@@ -8,7 +8,7 @@ allowed-tools:
   - Glob
 ---
 
-# /expo-worktree-dev: one sim + bundler per worktree, idempotently
+# /fx-expo-worktree-dev: one sim + bundler per worktree, idempotently
 
 This skill operates on **the current worktree only**. It does *not* decide whether
 to run multiple branches — you run it once per worktree, and each run gives *that*
@@ -18,7 +18,7 @@ a no-op that reattaches to what's already there.
 
 It's also the "run the app to see/verify it" step for worktree agents (e.g.
 `plan-implementer`): after building a mobile change in a worktree, call this to
-launch it. To QA the running **web** build in a browser, compose with [`qa-web`](../qa-web/SKILL.md).
+launch it. To QA the running **web** build in a browser, compose with [`fx-qa-web`](../fx-qa-web/SKILL.md).
 
 ## What it guarantees
 
@@ -57,7 +57,7 @@ ROOT=$(git rev-parse --show-toplevel)
 BRANCH=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD)
 SLUG=$(printf '%s' "$BRANCH" | tr '/:@ ' '----' | tr -cd 'A-Za-z0-9._-' | cut -c1-40)
 DEVICE="expo-wt-$SLUG"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/expo-worktree-dev"; mkdir -p "$STATE_DIR"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/fx-expo-worktree-dev"; mkdir -p "$STATE_DIR"
 STATE="$STATE_DIR/$(printf '%s' "$ROOT" | shasum | cut -c1-12).env"
 [ -f "$STATE" ] && . "$STATE"   # loads prior DEVICE/UDID/PORT/BUNDLER_PID, if any
 ```
@@ -165,9 +165,9 @@ Do this before `git worktree remove`, or as cleanup if you notice orphaned
 
 ## Compose with
 
-- [`qa-web`](../qa-web/SKILL.md) — once the app is running, QA-test the web build in
-  a real browser. This skill gets it running; `qa-web` exercises it.
-- [`qa-mobile-ios`](../qa-mobile-ios/SKILL.md) — the iOS counterpart: drives the app
+- [`fx-qa-web`](../fx-qa-web/SKILL.md) — once the app is running, QA-test the web build in
+  a real browser. This skill gets it running; `fx-qa-web` exercises it.
+- [`fx-qa-mobile-ios`](../fx-qa-mobile-ios/SKILL.md) — the iOS counterpart: drives the app
   on the simulator this skill booted (via serve-sim) to find and fix bugs.
 - Worktree agents (e.g. `plan-implementer`) — call this as the "run the app to
   verify" step after building a mobile change in a worktree.

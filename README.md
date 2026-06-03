@@ -10,33 +10,41 @@ Miguel's personal Claude Code stack — skills and agents published under the
 frxnls/                           # the plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
-│   ├── qa-web/SKILL.md                      # /frxnls:qa-web — browser QA via Playwright MCP
-│   ├── qa-mobile-ios/SKILL.md               # /frxnls:qa-mobile-ios — iOS Simulator QA via serve-sim
-│   ├── first-principles-brainstorm/SKILL.md # /frxnls:first-principles-brainstorm
-│   ├── security-audit/SKILL.md              # /frxnls:security-audit — whole-system CSO audit
-│   ├── expo-worktree-dev/SKILL.md           # /frxnls:expo-worktree-dev — give the current worktree its own Expo sim+server
-│   ├── ship/                                # /frxnls:ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
-│   └── teardown/SKILL.md                    # /frxnls:teardown — retire a task's worktree/branch (+ sim) post-merge
+│   ├── fx-brainstorm/SKILL.md        # /frxnls:fx-brainstorm — adversarial first-principles interviewer
+│   ├── fx-plan/                      # /frxnls:fx-plan — idea → researched, implementation-ready plan (SKILL.md + references/)
+│   ├── fx-ship/                      # /frxnls:fx-ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
+│   ├── fx-qa-web/SKILL.md            # /frxnls:fx-qa-web — browser QA via Playwright MCP
+│   ├── fx-qa-mobile-ios/SKILL.md     # /frxnls:fx-qa-mobile-ios — iOS Simulator QA via serve-sim
+│   ├── fx-expo-worktree-dev/SKILL.md # /frxnls:fx-expo-worktree-dev — give the current worktree its own Expo sim+server
+│   ├── fx-teardown/SKILL.md          # /frxnls:fx-teardown — retire a task's worktree/branch (+ sim) post-merge
+│   ├── fx-compound/                  # /frxnls:fx-compound — capture a solved problem → docs/solutions/ (+ CONCEPTS.md)
+│   └── fx-security-audit/SKILL.md    # /frxnls:fx-security-audit — whole-system CSO audit
 └── agents/
-    ├── rex-code-reviewer.md      # frxnls:rex-code-reviewer — PR review agent
-    ├── plan-implementer.md       # frxnls:plan-implementer — executes a plan/issue → PR
-    └── plan-implementer-backend.md # frxnls:plan-implementer-backend — backend/DB-safe executor → PR
+    ├── rex-code-reviewer.md       # frxnls:rex-code-reviewer — PR review agent
+    ├── plan-implementer.md        # frxnls:plan-implementer — executes a plan/issue → PR
+    ├── plan-implementer-backend.md # frxnls:plan-implementer-backend — backend/DB-safe executor → PR
+    ├── fx-repo-research.md        # frxnls:fx-repo-research — read-only codebase scout
+    └── fx-learnings-research.md   # frxnls:fx-learnings-research — read-only docs/solutions + history scout
 ```
 
 ## Components
 
 | Type  | Name                | Invoke                     | What it does |
 |-------|---------------------|----------------------------|--------------|
-| Skill | `qa-web`            | `/frxnls:qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
-| Skill | `qa-mobile-ios`     | `/frxnls:qa-mobile-ios`    | QA an iOS app on the Simulator — drives it via [serve-sim](https://github.com/EvanBacon/serve-sim) (AX tree + tap/gesture/type, device logs), finds bugs with screenshot evidence, fixes at the RN source, re-verifies |
-| Skill | `first-principles-brainstorm` | `/frxnls:first-principles-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action |
-| Skill | `security-audit` | `/frxnls:security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
-| Skill | `expo-worktree-dev` | `/frxnls:expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |
-| Skill | `ship` | `/frxnls:ship` | Orchestrate a defined plan/issue → reviewed PR: **sets up the workspace (asks branch vs worktree)**, routes to `plan-implementer` vs `-backend`, runs matching QA (`qa-web` / `qa-mobile-ios`), surfaces Rex's review, keeps it alive for revisions, **stops before merge**. Bundles `ship-batch.workflow.js` for batch runs |
-| Skill | `teardown` | `/frxnls:teardown` | Retire a finished task's workspace — remove its linked worktree, optionally delete the local branch, shut down its `expo-wt-*` sim. Run after the PR merges/aborts; never auto-runs, never touches the main checkout |
+| Skill | `fx-qa-web`            | `/frxnls:fx-qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
+| Skill | `fx-qa-mobile-ios`     | `/frxnls:fx-qa-mobile-ios`    | QA an iOS app on the Simulator — drives it via [serve-sim](https://github.com/EvanBacon/serve-sim) (AX tree + tap/gesture/type, device logs), finds bugs with screenshot evidence, fixes at the RN source, re-verifies |
+| Skill | `fx-brainstorm` | `/frxnls:fx-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action. Optionally emits a structured `docs/brainstorms/*-requirements.md` (R/A/F/AE IDs) that `fx-plan` carries as its `origin:` |
+| Skill | `fx-plan` | `/frxnls:fx-plan` | Turn an idea, brainstorm doc, or issue into a durable `docs/plans/*.md` — researches (dispatches `fx-repo-research` + `fx-learnings-research`, optional web), breaks work into ID'd units with test scenarios, runs a confidence/deepening pass, then hands off to `fx-ship`. The **HOW** between `fx-brainstorm` (WHAT) and `fx-ship` (execute). Plans, never codes. Adapted from Every's `ce-plan` |
+| Skill | `fx-security-audit` | `/frxnls:fx-security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
+| Skill | `fx-expo-worktree-dev` | `/frxnls:fx-expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |
+| Skill | `fx-ship` | `/frxnls:fx-ship` | Orchestrate a defined plan/issue → reviewed PR: **sets up the workspace (asks branch vs worktree)**, routes to `plan-implementer` vs `-backend`, runs matching QA (`fx-qa-web` / `fx-qa-mobile-ios`), surfaces Rex's review, keeps it alive for revisions, **stops before merge**. Bundles `ship-batch.workflow.js` for batch runs |
+| Skill | `fx-teardown` | `/frxnls:fx-teardown` | Retire a finished task's workspace — remove its linked worktree, optionally delete the local branch, shut down its `expo-wt-*` sim. Run after the PR merges/aborts; never auto-runs, never touches the main checkout |
+| Skill | `fx-compound` | `/frxnls:fx-compound` | Capture a just-solved problem (or hard-won decision/pattern) as a durable learning in `docs/solutions/` with searchable frontmatter, and seed `CONCEPTS.md` vocabulary — so the next occurrence is a lookup, not a re-investigation. Full/Lightweight/headless modes; overlap-detects vs existing docs; `plan-implementer` + `fx-learnings-research` read what it writes. Adapted from Every's `ce-compound` |
 | Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — quote-the-line gate, LLM-security lens, hybrid inline comments + summary with severity badges |
 | Agent | `plan-implementer` | `frxnls:plan-implementer` | Executes an already-defined plan file or GitHub issue end-to-end on Sonnet — auto-detects the source, **works on the branch/worktree the caller set up** (never creates/destroys one; refuses on the trunk), implements strictly in-scope, verifies until green, opens **or updates** a PR (`Closes #N`), and reports back |
 | Agent | `plan-implementer-backend` | `frxnls:plan-implementer-backend` | Backend/DB-focused fork of `plan-implementer` — detects the project's migration tool (Drizzle/Prisma/Supabase CLI, no Supabase assumption), **generates** migrations and reviews the SQL for data loss, verifies against a **disposable** DB (never prod), enforces RLS/authz + contract-safety, opens a PR. Optional Supabase advisor lints (see below) |
+| Agent | `fx-repo-research` | `frxnls:fx-repo-research` | Read-only codebase scout — maps stack/versions, architecture, conventions, and the concrete files/patterns/tests a change touches; flags when local patterns are thin/absent. Dispatched by `fx-plan` (and `fx-compound`); returns a structured brief, never writes |
+| Agent | `fx-learnings-research` | `frxnls:fx-learnings-research` | Read-only institutional-knowledge scout — searches `docs/solutions/`, `CONCEPTS.md`, git history, and issues for prior learnings; for `fx-compound`, scores overlap against a doc being written. Returns links + relationships, never writes |
 
 > **Optional — Supabase advisor lints for `plan-implementer-backend`.** The agent
 > is portable and assumes no Supabase by default. To have it also run Supabase
@@ -47,25 +55,32 @@ frxnls/                           # the plugin
 
 ## Delivery pipeline
 
-The skills and agents compose into one path from idea to merged code. `ship` is the
+The skills and agents compose into one path from idea to merged code. `fx-ship` is the
 orchestrator; everything else is a stage it (or you) calls. Each component is forked
 only where the **tools or risk** genuinely differ — shared knowledge stays in skills.
 
 ```
-idea ──▶ plan ───────────▶ ship ──▶ implement ────────────▶ PR ──▶ review ───────▶ QA ─────────────▶ you merge ──▶ /teardown
-         first-principles          plan-implementer               rex-code-reviewer   qa-web /
-         · plan mode               plan-implementer-backend        + Rex CI            qa-mobile-ios
+idea ─▶ fx-brainstorm ─▶ fx-plan ─▶ fx-ship ─▶ implement ─▶ PR ────────▶ review ─────────▶ QA ────────────▶ you merge ─▶ fx-teardown
+        WHAT             HOW        orchestrate plan-implementer         rex-code-reviewer fx-qa-web /
+        · plan mode                             plan-implementer-backend + Rex CI          fx-qa-mobile-ios
+                           ▲
+                           └── docs/solutions/ + CONCEPTS.md ◀── fx-compound (capture each solved problem, after QA / merge)
 ```
 
-**1 · Shape the work.** `first-principles-brainstorm` to pressure-test an idea, then
-Claude Code plan mode (or a GitHub issue) to define it. `ship` starts from a *defined*
-plan/issue — it doesn't plan for you.
+**1 · Shape the work.** `fx-brainstorm` to pressure-test an idea (the **WHAT**) — when
+it's worth preserving, save its `docs/brainstorms/*-requirements.md` and `fx-plan`
+picks it up as `origin:`. Then `fx-plan` turns it into a durable, researched plan under
+`docs/plans/` (the **HOW**) —
+it dispatches `fx-repo-research` + `fx-learnings-research` (and optional web research),
+breaks the work into ID'd units with test scenarios, runs a confidence/deepening pass,
+and hands off to `fx-ship`. A GitHub issue or Claude Code plan mode also work. `fx-ship`
+starts from a *defined* plan/issue — it doesn't plan for you.
 
-**2 · Orchestrate — `ship`.** Owns the **workspace**: recommends branch-in-place vs a new
+**2 · Orchestrate — `fx-ship`.** Owns the **workspace**: recommends branch-in-place vs a new
 worktree and **confirms with you**, creates it, routes the work to the right implementer
 and QA, keeps the workspace alive through revisions, and **stops before merge** (human
 gate — it never merges).
-- *Interactive* (default): `/frxnls:ship <plan-or-issue>` — one item or a few, you in the loop.
+- *Interactive* (default): `/frxnls:fx-ship <plan-or-issue>` — one item or a few, you in the loop.
 - *Batch*: bundles `ship-batch.workflow.js` to prepare a worktree+branch per item and
   implement many **independent** items in parallel (one PR each). Stops at PRs; QA/merge stay interactive.
 
@@ -82,33 +97,48 @@ enforces RLS/authz + API-contract safety.
 **4 · Review — `rex-code-reviewer` + Rex CI.** Rex reviews every PR — locally, or via the
 CI bot ([below](#ci-rex-as-a-pr-gating-bot)).
 
-**5 · QA — `qa-web` / `qa-mobile-ios`.** Web QA drives a real browser (Playwright MCP).
+**5 · QA — `fx-qa-web` / `fx-qa-mobile-ios`.** Web QA drives a real browser (Playwright MCP).
 iOS QA drives the Simulator through [serve-sim](https://github.com/EvanBacon/serve-sim):
 an **AX-tree-driven** observe→act→verify loop (tap/gesture/type by element, device logs
 as the console) with screenshot evidence. Both find bugs, fix at the source, and re-verify.
 
-**Running the app for mobile QA — `expo-worktree-dev`.** Idempotently gives the *current*
+**Running the app for mobile QA — `fx-expo-worktree-dev`.** Idempotently gives the *current*
 worktree its own Simulator + Expo dev server: a dedicated device named `expo-wt-<branch>`
 (never shared across worktrees) on a free, persisted port. Run it once per worktree and
-several branches run side by side with no sim/port collisions — and `qa-mobile-ios`
+several branches run side by side with no sim/port collisions — and `fx-qa-mobile-ios`
 resolves *this* worktree's device by that same name, so it never drives the wrong sim.
 
-**6 · Retire — `teardown`.** Implementers and `ship` never auto-clean, so the branch/worktree
-survives PR + QA for revisions. Once the PR is merged or abandoned, `/frxnls:teardown` removes
+**6 · Retire — `fx-teardown`.** Implementers and `fx-ship` never auto-clean, so the branch/worktree
+survives PR + QA for revisions. Once the PR is merged or abandoned, `/frxnls:fx-teardown` removes
 the worktree, optionally deletes the local branch, and shuts down its `expo-wt-*` sim — never
 the main checkout.
 
+**7 · Compound — `fx-compound`.** After a bug is fixed, a QA pass closes out, or a PR
+lands, `fx-compound` captures the learning into `docs/solutions/` (searchable frontmatter,
+by category) and seeds `CONCEPTS.md` — so the next occurrence is a lookup, not a
+re-investigation. The loop closes: `fx-plan` and the `plan-implementer` agents read
+`docs/solutions/` to start the *next* change already informed. Each unit of work makes
+the next one easier.
+
 ```
+# shape → plan → ship, the full path
+/frxnls:fx-brainstorm                                 # pressure-test the idea (WHAT)
+/frxnls:fx-plan "add reservation reminders"           # → docs/plans/YYYY-MM-DD-001-feat-…-plan.md (HOW)
+/frxnls:fx-ship docs/plans/2026-06-03-001-feat-reservation-reminders-plan.md
+
 # single item, interactive, with human gates
-/frxnls:ship #42
+/frxnls:fx-ship #42
 
 # or hand the work to an implementer directly
-"implement the plan in .claude/plans/add-orders.md"   →  plan-implementer(-backend)
+"implement the plan in docs/plans/add-orders.md"      →  plan-implementer(-backend)
+
+# after it ships, compound the learning
+/frxnls:fx-compound                                   # → docs/solutions/<category>/<slug>.md (+ CONCEPTS.md)
 
 # two branches on two simulators, then QA one of them
-/frxnls:expo-worktree-dev   # in worktree A   (boots expo-wt-A)
-/frxnls:expo-worktree-dev   # in worktree B   (boots expo-wt-B)
-/frxnls:qa-mobile-ios       # in worktree A   (locks onto expo-wt-A)
+/frxnls:fx-expo-worktree-dev   # in worktree A   (boots expo-wt-A)
+/frxnls:fx-expo-worktree-dev   # in worktree B   (boots expo-wt-B)
+/frxnls:fx-qa-mobile-ios       # in worktree A   (locks onto expo-wt-A)
 ```
 
 ## Install

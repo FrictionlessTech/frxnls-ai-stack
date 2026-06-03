@@ -1,5 +1,5 @@
 ---
-name: teardown
+name: fx-teardown
 description: Retire a finished task's workspace — remove its linked git worktree, optionally delete the local branch, and shut down + delete its expo-wt-<branch> simulator + serve-sim if it had one. Use when asked to "tear down this worktree", "clean up the worktree", "retire this branch/task", "I merged the PR, clean up", or "remove the worktree for this task". Run after a PR is merged or abandoned. Never touches the main checkout.
 allowed-tools:
   - Bash
@@ -8,10 +8,10 @@ allowed-tools:
   - Glob
 ---
 
-# /teardown: retire a finished task's workspace
+# /fx-teardown: retire a finished task's workspace
 
-The inverse of the workspace setup that `ship` (or you) did, and of
-[`expo-worktree-dev`](../expo-worktree-dev/SKILL.md). Implementers and the
+The inverse of the workspace setup that `fx-ship` (or you) did, and of
+[`fx-expo-worktree-dev`](../fx-expo-worktree-dev/SKILL.md). Implementers and the
 orchestrator deliberately **never** auto-clean — so the branch/worktree stays alive
 for revisions after PR + QA. Run this **once the PR is merged or abandoned** to
 retire it. It never touches your main checkout.
@@ -54,11 +54,11 @@ MAIN=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')   # t
    say so and skip to step 4 (branch only).
 
 2. **Sim teardown (if this was a mobile task)** — if a device `expo-wt-$SLUG` exists,
-   retire it (mirrors `expo-worktree-dev`'s Teardown):
+   retire it (mirrors `fx-expo-worktree-dev`'s Teardown):
    ```bash
    UDID=$(xcrun simctl list devices | grep -F "expo-wt-$SLUG (" | grep -oiE '[0-9a-f-]{36}' | head -1)
    [ -n "$UDID" ] && { xcrun simctl shutdown "$UDID" 2>/dev/null; xcrun simctl delete "$UDID"; }
-   # stop the bundler + drop state (see expo-worktree-dev): kill the recorded BUNDLER_PID, rm the state file
+   # stop the bundler + drop state (see fx-expo-worktree-dev): kill the recorded BUNDLER_PID, rm the state file
    ```
 
 3. **Remove the worktree** (from the main checkout, never from inside it):
@@ -76,5 +76,5 @@ MAIN=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')   # t
    left (e.g. the remote branch, an unmerged branch you didn't delete).
 
 ## Compose with
-- [`expo-worktree-dev`](../expo-worktree-dev/SKILL.md) — the create side (sim + worktree).
-- [`ship`](../ship/SKILL.md) — drives you here after a PR is merged or abandoned.
+- [`fx-expo-worktree-dev`](../fx-expo-worktree-dev/SKILL.md) — the create side (sim + worktree).
+- [`fx-ship`](../fx-ship/SKILL.md) — drives you here after a PR is merged or abandoned.

@@ -34,8 +34,10 @@ and hand off a reviewable PR.
 
 Parse your launch prompt to find the work source:
 
-- A path ending in `.md` (especially under `.claude/plans/`) → **plan file**.
-  `Read` it.
+- A path ending in `.md` (especially under `docs/plans/` or `.claude/plans/`) →
+  **plan file**. `Read` it. Plans from `fx-plan` carry `status: active` frontmatter,
+  ID'd Implementation Units (`### U1.`), and per-unit test scenarios — execute the
+  units in dependency order and treat their test scenarios as the coverage to write.
 - `#<n>`, an issue URL, or "issue N" → **GitHub issue**. Fetch it:
   ```
   gh issue view <n> --json title,body,comments,labels,url
@@ -53,7 +55,7 @@ Must not touch authenticated internal routes. Tracked in issue #42.
 
 ### Stage 1 — Confirm the workspace (you do not create or destroy one)
 
-The caller — the `ship` orchestrator or the user — owns the branch/worktree
+The caller — the `fx-ship` orchestrator or the user — owns the branch/worktree
 lifecycle. You **never** create or remove branches or worktrees. You work on the
 current branch, in the current directory, wherever you were launched.
 
@@ -64,7 +66,7 @@ BASE=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)   # PR 
 
 - If `BRANCH` is the repo's **default branch** (`BASE` — i.e. main/master), **STOP —
   do not commit.** Return: `I commit to a feature branch, but HEAD is the trunk
-  (<BRANCH>). Check out a feature branch first, or launch me via /frxnls:ship.`
+  (<BRANCH>). Check out a feature branch first, or launch me via /frxnls:fx-ship.`
 - Otherwise this branch is your workspace.
 
 Check whether a PR already exists for the branch — this decides Stage 4 (a fresh
@@ -79,6 +81,10 @@ Work through the plan/issue items in order. For each:
 
 - Search the codebase first (`Grep`/`Glob`) for existing implementations, helpers,
   and conventions to reuse. Do not reinvent what already exists.
+- If `docs/solutions/` exists, check it for a documented learning covering this area
+  before implementing (`fx-compound` writes them, organized by category with
+  `module`/`tags`/`problem_type` frontmatter). A prior fix or convention there can
+  save you the same investigation — follow it rather than rediscovering it.
 - Implement **only** what the plan/issue specifies.
 - When the plan is vague or you hit a soft obstacle (a naming choice, an ambiguous
   requirement, two reasonable approaches): pick the most reasonable option, keep
@@ -151,7 +157,7 @@ End the PR body with:
   `- [ ]` into `- [x]` for finished items). Leave unfinished/blocked items unchecked.
 
 Do **not** remove the branch or worktree — the caller owns teardown
-(`/frxnls:teardown`, run when the PR is merged or abandoned).
+(`/frxnls:fx-teardown`, run when the PR is merged or abandoned).
 
 ### Stage 6 — Return a report
 

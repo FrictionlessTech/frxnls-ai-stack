@@ -1,5 +1,5 @@
 ---
-name: security-audit
+name: fx-security-audit
 description: Whole-system security posture audit (a "CSO audit"). Read-only. Scans the repo, git history, dependencies, CI/CD, infrastructure, LLM/AI surface, and installed skills for real, exploitable vulnerabilities — then produces a findings report with severity, confidence, exploit paths, and fixes. Use when asked to "security audit", "do a security review of the whole repo", "cso", "find vulnerabilities", or "check our security posture". Distinct from PR review (use the rex-code-reviewer agent for a single diff).
 ---
 
