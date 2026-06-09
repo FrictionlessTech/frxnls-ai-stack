@@ -10,6 +10,20 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.9.0] — 2026-06-09
+
+### Added
+- **`fx-triage`** skill — the front of the loop: scans the project's work sources,
+  ranks what's actionable, and surfaces a triage digest for you to green-light. It
+  discovers and ranks but never implements — it hands green-lit items to `fx-ship`
+  / `fx-debug`, keeping a human gate at the *front* of the pipeline that mirrors the
+  one `fx-ship` keeps before merge. Built `gh`-first so it works in any clone (local
+  or unattended cloud routine) with no MCP; Sentry/Linear/PostHog/Slack are optional
+  enrichment that degrade gracefully (absence is noted in the digest, never fatal).
+  Runs interactively or headless (scheduled routine → writes `docs/triage/<date>.md`
+  and surfaces to a reporting connector). Documents both local-cron and cloud-routine
+  provisioning, including how to configure the routine's OAuth connectors.
+
 ## [0.8.0] — 2026-06-03
 
 ### Added

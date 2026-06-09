@@ -10,6 +10,7 @@ Miguel's personal Claude Code stack — skills and agents published under the
 frxnls/                           # the plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
+│   ├── fx-triage/SKILL.md            # /frxnls:fx-triage — scan work sources → ranked digest (front of the loop)
 │   ├── fx-brainstorm/SKILL.md        # /frxnls:fx-brainstorm — adversarial first-principles interviewer
 │   ├── fx-plan/                      # /frxnls:fx-plan — idea → researched, implementation-ready plan (SKILL.md + references/)
 │   ├── fx-ship/                      # /frxnls:fx-ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
@@ -31,6 +32,7 @@ frxnls/                           # the plugin
 
 | Type  | Name                | Invoke                     | What it does |
 |-------|---------------------|----------------------------|--------------|
+| Skill | `fx-triage`            | `/frxnls:fx-triage`           | The **front of the loop**: scan work sources (GitHub issues/PRs/CI via `gh`; Sentry/Linear/etc. when those MCP connectors are present), rank what's actionable (P0–P3), cross-reference `docs/solutions/`, and surface a triage digest. Discovers and ranks — **never implements**; hands green-lit items to `fx-ship` / `fx-debug`. Runs interactively or **headless on a schedule** (cloud routine / local cron); `gh`-first so it degrades gracefully when MCP connectors are absent |
 | Skill | `fx-qa-web`            | `/frxnls:fx-qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
 | Skill | `fx-qa-mobile-ios`     | `/frxnls:fx-qa-mobile-ios`    | QA an iOS app on the Simulator — drives it via [serve-sim](https://github.com/EvanBacon/serve-sim) (AX tree + tap/gesture/type, device logs), finds bugs with screenshot evidence, fixes at the RN source, re-verifies |
 | Skill | `fx-brainstorm` | `/frxnls:fx-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action. Optionally emits a structured `docs/brainstorms/*-requirements.md` (R/A/F/AE IDs) that `fx-plan` carries as its `origin:` |
@@ -60,12 +62,21 @@ orchestrator; everything else is a stage it (or you) calls. Each component is fo
 only where the **tools or risk** genuinely differ — shared knowledge stays in skills.
 
 ```
-idea ─▶ fx-brainstorm ─▶ fx-plan ─▶ fx-ship ─▶ implement ─▶ PR ────────▶ review ─────────▶ QA ────────────▶ you merge ─▶ fx-teardown
-        WHAT             HOW        orchestrate plan-implementer         rex-code-reviewer fx-qa-web /
-        · plan mode                             plan-implementer-backend + Rex CI          fx-qa-mobile-ios
-                           ▲
-                           └── docs/solutions/ + CONCEPTS.md ◀── fx-compound (capture each solved problem, after QA / merge)
+fx-triage ─▶ idea ─▶ fx-brainstorm ─▶ fx-plan ─▶ fx-ship ─▶ implement ─▶ PR ────────▶ review ─────────▶ QA ────────────▶ you merge ─▶ fx-teardown
+discover/rank        WHAT             HOW        orchestrate plan-implementer         rex-code-reviewer fx-qa-web /
++ surface (digest)   · plan mode                            plan-implementer-backend + Rex CI          fx-qa-mobile-ios
+   │  ▲                                ▲
+   │  └────────────────────────────────┴── docs/solutions/ + CONCEPTS.md ◀── fx-compound (capture each solved problem, after QA / merge)
+   └── (scheduled or manual) green-lit items enter at fx-ship / fx-debug / fx-plan
 ```
+
+**0 · Triage the inbox — `fx-triage`.** Optional front of the loop. Scans GitHub
+(issues/PRs/CI via `gh`) and any available MCP sources (Sentry/Linear/…), ranks what's
+actionable (P0–P3), cross-references `docs/solutions/`, and **surfaces a digest** — then
+stops. *You* green-light items into the pipeline (it never implements). Run it manually,
+or on a schedule (local cron / unattended cloud routine) so a run starts without you
+being the one to prompt. `gh`-first, so it still produces a useful digest when no MCP
+connectors are present.
 
 **1 · Shape the work.** `fx-brainstorm` to pressure-test an idea (the **WHAT**) — when
 it's worth preserving, save its `docs/brainstorms/*-requirements.md` and `fx-plan`
