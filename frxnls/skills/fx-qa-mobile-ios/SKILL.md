@@ -158,7 +158,7 @@ For each fixable bug, severity order:
 - **Re-test** — reload via Fast Refresh, re-screenshot, re-check `/ax` and
   `/.sim/logs`; classify `verified` / `best-effort` / `reverted`.
 - **Regression flow** (skip if not `verified`, purely-visual/layout-only fix, or no
-  Maestro setup — i.e., no `.maestro/` dir and `maestro` absent; skips are silent
+  Maestro setup — i.e., no `.maestro/` dir, or `maestro` not on PATH; skips are silent
   no-ops, not errors):
   Translate the bug's already-documented Phase-4 repro steps (the `/ax` targets,
   actions, and fixed outcome) into a minimal Maestro YAML flow — do not record actions
@@ -173,8 +173,8 @@ For each fixable bug, severity order:
 
   **Attribution header** (two lines, ASCII dash):
   ```
-  # Regression: ISSUE-NNN - <what broke>
-  # Found by /fx-qa-mobile-ios on <YYYY-MM-DD>
+  # Regression: ISSUE-NNN - {what broke}
+  # Found by /fx-qa-mobile-ios on {YYYY-MM-DD}
   ```
 
   Write to `.maestro/regression-<issue-id>.yaml`. Run `maestro test` on it once: if it

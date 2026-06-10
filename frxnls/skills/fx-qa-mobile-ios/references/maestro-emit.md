@@ -33,7 +33,8 @@ name: Regression - cart badge updates after add-to-cart (ISSUE-042)
     id: "add-to-cart-button"
 - assertVisible:
     id: "cart-badge"
-    label: "1"
+- assertVisible:
+    text: "1"
 - assertNotVisible:
     text: "0"
 ```
@@ -166,8 +167,8 @@ runnable and independently deletable.
 
 **Attribution header** — always two lines, ASCII dash `-` (not em-dash):
 ```yaml
-# Regression: ISSUE-NNN - <what broke>
-# Found by /fx-qa-mobile-ios on <YYYY-MM-DD>
+# Regression: ISSUE-NNN - {what broke}
+# Found by /fx-qa-mobile-ios on {YYYY-MM-DD}
 ```
 
 ---
@@ -180,7 +181,7 @@ runnable and independently deletable.
    a red or unverifiable flow is worse than none.
 2. Purely-visual / layout-only fix — no assertable accessibility-node outcome exists
    (the iOS analogue of fx-qa-web's "pure CSS" skip).
-3. No Maestro setup — no `.maestro/` directory and `maestro` not on PATH. Emit is a
+3. No Maestro setup — no `.maestro/` directory, or `maestro` not on PATH. Emit is a
    no-op; do not create the directory or install Maestro.
 
 **Fail-once-then-delete policy:**
