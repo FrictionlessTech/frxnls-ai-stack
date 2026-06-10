@@ -157,6 +157,30 @@ For each fixable bug, severity order:
 - **Commit** one per fix: `git commit -m "fix(qa-ios): ISSUE-NNN - <desc>"`.
 - **Re-test** — reload via Fast Refresh, re-screenshot, re-check `/ax` and
   `/.sim/logs`; classify `verified` / `best-effort` / `reverted`.
+- **Regression flow** (skip if not `verified`, purely-visual/layout-only fix, or no
+  Maestro setup — i.e., no `.maestro/` dir, or `maestro` not on PATH; skips are silent
+  no-ops, not errors):
+  Translate the bug's already-documented Phase-4 repro steps (the `/ax` targets,
+  actions, and fixed outcome) into a minimal Maestro YAML flow — do not record actions
+  or add any tracking infrastructure. Each flow is self-contained: its own `launchApp`
+  + navigation to the trigger, no `runFlow` dependency. Match existing `.maestro/*.yaml`
+  style if any exist; otherwise follow [`references/maestro-emit.md`](references/maestro-emit.md).
+
+  **Selector resolution** — resolve each action to a Maestro `id:` from the `/ax` node's
+  `accessibilityIdentifier` (RN `testID`); fall back to `text:` only when no stable id is
+  exposed. **Never** emit a `point:` coordinate tap — if a node is unidentifiable, fail
+  loudly and flag for human review.
+
+  **Attribution header** (two lines, ASCII dash):
+  ```
+  # Regression: ISSUE-NNN - {what broke}
+  # Found by /fx-qa-mobile-ios on {YYYY-MM-DD}
+  ```
+
+  Write to `.maestro/regression-<issue-id>.yaml`. Run `maestro test` on it once: if it
+  fails, attempt one correction; if it still fails, **delete the file and defer** — never
+  leave a red flow behind. Passes → separate commit: `test(qa-ios): regression flow for
+  ISSUE-NNN`.
 - **Self-regulation** — every 5 fixes or after any revert, STOP and evaluate before
   continuing. Hard cap 50 fixes. (See `fx-qa-web` for the full WTF-likelihood rubric.)
 
@@ -175,9 +199,15 @@ For each fixable bug, severity order:
 ├── qa-ios-report-<slug>-<YYYY-MM-DD>.md
 ├── screenshots/  (initial.png, issue-001-before.png, issue-001-after.png, …)
 └── baseline.json
+
+.maestro/                          (app repo — emitted when fix is verified)
+└── regression-<issue-id>.yaml
 ```
 
 ## Compose with
 - **serve-sim skill** — the full driver. Install: `bunx add-skill EvanBacon/serve-sim`.
 - [`fx-expo-worktree-dev`](../fx-expo-worktree-dev/SKILL.md) — boot the app on a per-worktree sim before QA.
 - [`fx-qa-web`](../fx-qa-web/SKILL.md) — the web sibling (same loop, Playwright driver).
+- **Maestro** — replay/CI back end for the emitted regression flows. YAML format,
+  selector rules, robustness flags, and lifecycle policy: [`references/maestro-emit.md`](references/maestro-emit.md).
+  App-side install + CI wiring tracked in `forked-up/fu#519`.
