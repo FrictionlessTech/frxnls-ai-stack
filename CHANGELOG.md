@@ -10,6 +10,35 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.10.0] — 2026-06-10
+
+### Changed
+- **`rex-code-reviewer`** — widened the review remit beyond simplicity/security/docs
+  so Rex catches the correctness and data-integrity classes it was structurally
+  blind to (the kind `gemini-code-assist` was surfacing and Rex was missing):
+  - New always-on **Correctness & Runtime Safety** reviewer (Subagent 4): logic/edge
+    cases, null/undefined/**NaN-into-DB** propagation, `||` vs `??`, error handling
+    (missing `.catch()` in `Promise.all`, silent failures, env-less crons),
+    concurrency/lifecycle (TOCTOU races, leaked pages/timers/listeners,
+    permanently-rejected promises), array-element type assumptions, and test guards
+    that silently pass.
+  - Expanded the conditional **Contracts & Migrations** reviewer into **Data
+    Integrity, Contracts & Migrations** (Subagent 5): FK `onDelete` gaps via
+    delete-path tracing, UNIQUE-constraint violations simulated against pre-existing
+    **inactive/soft-deleted** rows, SQL↔app hash/serialization parity, soft-delete
+    read leaks, non-sargable queries, and connection-pool exhaustion.
+  - Broadened the Stage 2 triggers so the data-integrity reviewer fires on
+    repositories, query builders, and backfill/sweep/cron scripts — not just
+    `migrations/`.
+  - Carved first-party reliability bugs (pool exhaustion, OOM, leaked
+    handles/timers) out of the DoS hard-exclusion so they survive the merge gate.
+  - Separated **confidence** (mechanism verified via the quoted line) from
+    **trigger likelihood** (encoded in the P-level), so a verified-but-latent finding
+    stays ≥75 instead of being wrongly suppressed by the confidence gate.
+  - Validated by a blind backtest against `forked-up/fu` PRs #509/#518/#480: Rex
+    independently reproduced gemini's P0 constraint-violation, FK-cascade, null-crash,
+    and NaN-divide-by-zero findings (and found an extra P0 on #509).
+
 ## [0.9.0] — 2026-06-09
 
 ### Added
