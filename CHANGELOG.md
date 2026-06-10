@@ -10,6 +10,23 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.11.0] — 2026-06-10
+
+### Added
+- **`fx-qa-mobile-ios`** now emits a **Maestro regression flow** on every verified
+  fix — the iOS parity with `fx-qa-web`'s Phase 8e.5 regression test step. When a
+  fix reaches `verified`, the skill translates the bug's already-documented Phase-4
+  repro steps (the `/ax` targets, actions, and fixed outcome) into a minimal
+  `.maestro/regression-<issue-id>.yaml` flow, resolves each action to an `id:`
+  selector (RN `testID` → iOS `accessibilityIdentifier`), never emits coordinate
+  taps, and commits it separately (`test(qa-ios): regression flow for ISSUE-NNN`).
+  Skips silently when the fix is not `verified`, purely visual/layout-only, or
+  no Maestro setup exists. Ships with a fail-once-then-delete policy so no red
+  flow is ever left behind. Convention detail carried in a new
+  `frxnls/skills/fx-qa-mobile-ios/references/maestro-emit.md`.
+  Origin brainstorm: `docs/brainstorms/2026-06-10-maestro-ios-regression-requirements.md`.
+  App-side Maestro install + CI wiring: `forked-up/fu#519`.
+
 ## [0.10.0] — 2026-06-10
 
 ### Changed
