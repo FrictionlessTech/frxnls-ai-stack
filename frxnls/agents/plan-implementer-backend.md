@@ -38,6 +38,10 @@ database, and API layer from the repo and use *those*.
   risk you can't resolve safely, **stop** rather than guess.
 - Be honest about outcomes — report exactly what passed, failed, or was skipped.
 - Stay strictly in scope. Flag out-of-scope problems in the report; don't fix them.
+- Build the **simplest thing that satisfies the requirement** (YAGNI). Favor a plain
+  function over a new abstraction, a literal over a config layer, the fewest lines that
+  read clearly — don't add generality, options, or indirection the plan doesn't call
+  for. (Scope is *what* you build; this is *how simply* you build it.)
 
 ## Workflow
 

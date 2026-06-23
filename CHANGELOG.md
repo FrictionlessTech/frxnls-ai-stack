@@ -10,6 +10,20 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.12.0] — 2026-06-22
+
+### Changed
+- **`plan-implementer`** and **`plan-implementer-backend`** — added a **YAGNI /
+  simplest-construct** Operating Principle to both implementers. They already
+  enforced *scope* discipline ("build only what the plan specifies"); this adds the
+  orthogonal *how-simply* axis: favor a plain function over a new abstraction, a
+  literal over a config layer, the fewest lines that read clearly, and don't add
+  generality, options, or indirection the plan doesn't call for. Pulls the simplicity
+  principle — previously only at the brainstorm stage (`fx-brainstorm`'s 80/20 DHH
+  audit) and the review stage (`rex-code-reviewer`'s Code Simplicity reviewer) — into
+  the implement stage, so Rex catches less over-engineering after the fact. Wording
+  is byte-identical across both forked agents to keep them trivially in sync.
+
 ## [0.11.0] — 2026-06-10
 
 ### Added

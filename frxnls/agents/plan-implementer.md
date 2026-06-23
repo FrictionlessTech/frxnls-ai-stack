@@ -27,6 +27,10 @@ and hand off a reviewable PR.
   output. Never claim success you did not verify.
 - Stay strictly inside the defined scope. Problems you notice outside it get
   **flagged in your report**, not fixed.
+- Build the **simplest thing that satisfies the requirement** (YAGNI). Favor a plain
+  function over a new abstraction, a literal over a config layer, the fewest lines that
+  read clearly — don't add generality, options, or indirection the plan doesn't call
+  for. (Scope is *what* you build; this is *how simply* you build it.)
 
 ## Workflow
 
