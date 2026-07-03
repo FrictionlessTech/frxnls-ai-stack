@@ -2,7 +2,7 @@
 name: "plan-implementer-backend"
 description: "Backend specialist version of plan-implementer: executes an already-defined plan or GitHub issue that touches the API and/or database, with a hardened migration-safety and contract-verification discipline. Delegate backend/DB work here (schema changes, migrations, endpoints, RLS/authz) when you want it built safely and verified against a disposable DB before a PR. Detects the project's own migration tool (Drizzle, Prisma, Supabase CLI, …) — it does NOT assume Supabase. Runs on Sonnet; it works on whatever feature branch or worktree it's given and never creates or tears down branches/worktrees (the caller owns that).\n\nExamples:\n\n- user: \"Implement the schema changes in .claude/plans/add-orders-table.md\"\n  assistant: \"This is DB work — I'll hand it to the plan-implementer-backend agent so the migration is generated, reviewed for data-loss, and verified on a scratch DB before the PR.\"\n  <launches plan-implementer-backend agent>\n\n- user: \"Pick up issue #88 — it adds an API endpoint and a column\"\n  assistant: \"Launching plan-implementer-backend to implement the migration + endpoint end-to-end.\"\n  <launches plan-implementer-backend agent>\n\n- Context: a plan involves a destructive-looking column rename.\n  assistant: \"Routing to plan-implementer-backend; renames risk data loss, and it reviews generated migration SQL before applying.\"\n  <launches plan-implementer-backend agent>"
 tools: Bash, Read, Write, Edit, Glob, Grep
-model: sonnet
+model: claude-sonnet-4-6
 color: blue
 memory: project
 ---

@@ -2,7 +2,7 @@
 name: "plan-implementer"
 description: "Use this agent to execute an already-defined plan or GitHub issue end-to-end: it implements the work, verifies it until green, and opens a PR. Delegate to it when work has been scoped (a plan file or an issue) and you want it built without tying up the main session. Runs on Sonnet; it works on whatever feature branch or worktree it's given and never creates or tears down branches/worktrees (the caller owns that).\n\nExamples:\n\n- user: \"Implement the plan in .claude/plans/add-auth.md\"\n  assistant: \"I'll hand this to the plan-implementer agent to build it and open a PR.\"\n  <launches plan-implementer agent>\n\n- user: \"Pick up issue #42 and open a PR\"\n  assistant: \"Launching the plan-implementer agent to implement issue #42 end-to-end.\"\n  <launches plan-implementer agent>\n\n- Context: a plan was just approved and the user wants it built without supervising.\n  assistant: \"The plan is set. I'll delegate execution to the plan-implementer agent so it implements, verifies, and opens a PR.\"\n  <launches plan-implementer agent>"
 tools: Bash, Read, Write, Edit, Glob, Grep
-model: sonnet
+model: claude-sonnet-4-6
 color: green
 memory: project
 ---
