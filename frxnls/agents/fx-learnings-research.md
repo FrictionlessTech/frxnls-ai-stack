@@ -2,7 +2,7 @@
 name: "fx-learnings-research"
 description: "Read-only institutional-knowledge scout. Searches docs/solutions/, CONCEPTS.md, and git history for prior learnings, patterns, decisions, and related issues relevant to a topic — then returns a tight brief plus, when used by fx-compound, an overlap assessment against a doc being written. It searches and reports; it never writes files.\n\nExamples:\n\n- Context: fx-plan wants to ground a plan in past solved problems.\n  assistant: \"Launching fx-learnings-research to pull any prior learnings on this area.\"\n  <launches fx-learnings-research agent>\n\n- Context: fx-compound needs to know whether a learning already exists before writing a new one.\n  assistant: \"I'll use fx-learnings-research to check docs/solutions/ for overlap.\"\n  <launches fx-learnings-research agent>"
 tools: Read, Grep, Glob, Bash
-model: claude-sonnet-4-6
+model: sonnet
 color: purple
 ---
 

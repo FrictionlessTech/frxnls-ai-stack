@@ -2,7 +2,7 @@
 name: "rex-code-reviewer"
 description: "Use this agent when a pull request needs to be reviewed for code quality, security, and documentation completeness before merging. This agent is designed to be triggered automatically on PR creation or update, or manually when a thorough code review is needed.\n\nExamples:\n\n- user: \"Review PR #42\"\n  assistant: \"I'll use the Rex code reviewer agent to perform a thorough review of PR #42.\"\n  <launches rex-code-reviewer agent>\n\n- user: \"A new PR was just opened, can you check it?\"\n  assistant: \"Let me launch the Rex code reviewer agent to review the PR for correctness, data integrity, security, simplicity, and documentation.\"\n  <launches rex-code-reviewer agent>\n\n- Context: CI triggers on pull_request event\n  assistant: \"A new PR has been opened. I'll use the Rex code reviewer agent to review it.\"\n  <launches rex-code-reviewer agent>"
 tools: Agent, Bash, Glob, Grep, ListMcpResourcesTool, Read, ReadMcpResourceTool, WebFetch, WebSearch, Write
-model: claude-sonnet-4-6
+model: sonnet
 color: orange
 memory: project
 ---
@@ -139,7 +139,7 @@ Rules for subagents:
 - Omit findings with confidence below 50.
 - No prose outside the JSON.
 
-#### Subagent 1 — Code Simplicity (model: claude-sonnet-4-6)
+#### Subagent 1 — Code Simplicity (model: sonnet)
 
 Review changed files for:
 - Unnecessary complexity, over-engineered abstractions
@@ -201,7 +201,7 @@ Requirements:
 - If no clear doc target exists, say so explicitly — do not guess.
 - Do not require doc updates for pure internal refactors.
 
-#### Subagent 4 — Correctness & Runtime Safety (model: claude-sonnet-4-6)
+#### Subagent 4 — Correctness & Runtime Safety (model: sonnet)
 
 The diff may read cleanly and still be wrong at runtime. Trace what the code
 *does* with real values, not what it looks like. Review changed files for:
@@ -239,7 +239,7 @@ Default severity: data corruption or a persisted bad value → P0/P1; a crash or
 500 on a normal path → P1; a silently-passing test or a defensive-guard gap →
 P2. The quote-the-line gate applies in full.
 
-#### Subagent 5 — Data Integrity, Contracts & Migrations (model: claude-sonnet-4-6, conditional)
+#### Subagent 5 — Data Integrity, Contracts & Migrations (model: sonnet, conditional)
 
 Spawn only when Stage 2 triggers apply. Reason about the schema and the
 migration `.sql` as a **contract that must agree**, and simulate the migration

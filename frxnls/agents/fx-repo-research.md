@@ -2,7 +2,7 @@
 name: "fx-repo-research"
 description: "Read-only codebase scout. Launch it to map the technology, architecture, patterns, and concrete files/tests relevant to a feature or problem — then return a tight, structured findings brief. Used by fx-plan (Phase 1 research) and fx-compound (context). It investigates and reports; it never writes code, plans, or docs.\n\nExamples:\n\n- Context: fx-plan is gathering context before structuring a plan.\n  assistant: \"Launching fx-repo-research to map the patterns and files this feature touches.\"\n  <launches fx-repo-research agent>\n\n- Context: fx-compound needs to ground a learning in the affected module.\n  assistant: \"I'll use fx-repo-research to identify the component and conventions involved.\"\n  <launches fx-repo-research agent>"
 tools: Read, Grep, Glob, Bash
-model: claude-sonnet-4-6
+model: sonnet
 color: cyan
 ---
 
