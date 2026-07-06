@@ -162,6 +162,49 @@ When in doubt about whether subagent 5 applies, spawn it. DB-correctness misses 
 
 Each subagent must read the actual changed files (not just the diff). Launch concurrently.
 
+#### Fan-out policy (ensemble)
+
+The finder space for **correctness, security, and data-integrity** is large and
+discovery is variance-driven — one pass never surfaces all of it, which is why a
+single review drips findings across multiple runs. To front-load recall, **the
+first FULL review fans these three finders into multiple partitioned passes**;
+**simplicity and documentation are convergent and always run once** (a second
+pass just re-reports or adds nitpick noise).
+
+Two dials per finder: **partitions** — slices of the checklist, each aimed at a
+different failure class (divide-and-conquer for *breadth*) — and
+**rolls/partition** — independent re-runs of the *same* partition (variance
+coverage for *depth*). `full-review passes = partitions × rolls/partition`. Do
+NOT re-run the identical prompt across partitions; each partition is a different
+lens. Raise **rolls/partition** only where a finder still drips *within* a slice,
+and keep it at 1 for the opus finder (security) unless a PR clearly warrants it.
+
+| Subagent | Partitions (full review) | Rolls / partition | Full passes | Incremental re-run |
+|----------|--------------------------|:-----------------:|:-----------:|--------------------|
+| 2 Security | (a) authz / injection / secrets / SSRF / OWASP; (b) LLM-AI-security block | 1 | 2 | 1 pass (both; 2 if delta is auth/LLM-heavy) |
+| 4 Correctness | (a) null/undefined/NaN + type-shape + error handling; (b) concurrency / races / resource lifecycle; (c) logic / edge cases / silently-passing test guards | 1 | 3 | 1 pass (all categories) |
+| 5 Data-Integrity (when triggered) | (a) FK / constraint / backfill / migration safety; (b) soft-delete leaks / sargability / pool exhaustion / API-contract drift | 1 | 2 | 1 pass |
+| 1 Simplicity | — (whole checklist, not partitioned) | 1 | 1 | 1 pass |
+| 3 Documentation | — (whole checklist, not partitioned) | 1 | 1 | 1 pass |
+
+`Full passes` is derived (`partitions × rolls/partition`) and shown for
+at-a-glance cost. To add depth later, change **one number**: e.g. correctness
+`rolls/partition → 2` makes it 6 sonnet passes; security stays cheapest at 1.
+**Rolls/partition applies to full reviews only** — incremental re-runs always
+collapse to a single pass over the delta to stay cheap.
+
+Each pass is an **independent** subagent invocation with its own context — never
+show one pass another's output; independence is what makes both dials work
+(partition passes cover different ground; roll passes are the corroboration
+Stage 4 promotes on). Give each pass ONLY its partition of the checklist below,
+plus the shared JSON contract and rules. All passes across all subagents run
+concurrently.
+
+The first full review pays for this breadth once, where it matters most and there
+are no prior findings to reconcile. Incremental re-runs stay cheap (single pass
+over the delta) — the reconciliation in Stage 4 carries the rest. Union and
+cross-pass promotion happen in Stage 4.
+
 Each subagent returns structured JSON using this contract:
 
 ```json
@@ -201,6 +244,8 @@ Review changed files for:
 - Overly clever code that could be written more readably
 
 #### Subagent 2 — Security (model: opus)
+
+_On a FULL review this is partitioned per the Stage 3 fan-out table: partition (a) = the general checklist below; partition (b) = the LLM/AI-security block. Each partition runs `rolls/partition` times (default 1) and sees only its slice. On an incremental re-run, one pass covers both._
 
 Review changed files for:
 - Missing/bypassable auth (IDOR, unprotected routes)
@@ -255,6 +300,8 @@ Requirements:
 
 #### Subagent 4 — Correctness & Runtime Safety (model: sonnet)
 
+_On a FULL review this is partitioned per the Stage 3 fan-out table: (a) null/undefined/NaN + type-shape + error handling; (b) concurrency, races, resource lifecycle; (c) logic/edge cases + silently-passing test guards. Each partition runs `rolls/partition` times (default 1) and sees only its slice. On an incremental re-run, one pass covers all categories._
+
 The diff may read cleanly and still be wrong at runtime. Trace what the code
 *does* with real values, not what it looks like. Review changed files for:
 
@@ -293,7 +340,9 @@ P2. The quote-the-line gate applies in full.
 
 #### Subagent 5 — Data Integrity, Contracts & Migrations (model: sonnet, conditional)
 
-Spawn only when Stage 2 triggers apply. Reason about the schema and the
+Spawn only when Stage 2 triggers apply. _On a FULL review this is partitioned per the Stage 3 fan-out table: (a) FK / constraint / backfill / migration safety; (b) soft-delete leaks / sargability / pool exhaustion / API-contract drift. Each partition runs `rolls/partition` times (default 1). On an incremental re-run, one pass covers both._
+
+Reason about the schema and the
 migration `.sql` as a **contract that must agree**, and simulate the migration
 against rows that already exist (including inactive / soft-deleted rows).
 Review for:
@@ -352,8 +401,8 @@ findings**:
    - SSRF where the attacker controls only the path, not host or protocol
    - Insecure randomness in non-security contexts (UI ids, cache keys)
    - Concerns in `*.md` docs (EXCEPTION: `SKILL.md` / agent files are executable prompt code — flag those)
-3. **Deduplicate.** Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. When fingerprints match across reviewers — or between a carried-forward finding and a newly-surfaced one — merge: keep highest severity, note all contributing reviewers, list the finding once.
-4. **Cross-reviewer promotion.** 2+ reviewers flagging the same fingerprint → raise confidence one step (`50 → 75`, `75 → 100`).
+3. **Deduplicate (union).** All passes are unioned; the dedup collapses overlaps. Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. Merge when fingerprints match — across reviewers, **across ensemble passes of the same reviewer**, or between a carried-forward finding and a newly-surfaced one: keep highest severity, note all contributing reviewers/passes, list the finding once. **Record how many independent runs hit each fingerprint** — step 4 needs that count. With 3 ensemble passes, near-duplicate titles for one bug can slip the fingerprint; when the `file` + `evidence_line` match, merge even if the titles differ.
+4. **Cross-reviewer & cross-pass promotion.** When 2+ independent runs — different reviewers, OR different ensemble passes of the same reviewer — flag the same fingerprint, raise confidence one step (`50 → 75`, `75 → 100`). This is how the ensemble adds recall without adding noise: a lone confidence-50 finding is still suppressed at step 6, but one a second independent pass corroborates promotes to 75 and survives. (This is the corroboration a confidence-50 finding was defined to need — so the gate stays at 75; do not lower it.)
 5. **Separate pre-existing.** Pull findings with `pre_existing: true` into a separate list. These do not block the verdict.
 6. **Confidence gate.** Suppress remaining findings with confidence < 75. Exception: P0 findings at confidence ≥ 50 survive.
 7. **Sort.** Severity (P0 first) → confidence (desc) → file → line.
@@ -501,8 +550,10 @@ still list every finding so the summary is complete on its own.
 
 ### Coverage
 - Scope: full PR | incremental (`BASE_SHA..HEAD`, N delta files + M blast-radius)
-- Suppressed: N findings below confidence 75
 - Reviewers run: simplicity, security, documentation, correctness[, data-integrity]
+- Ensemble (full review): partitions × rolls — security 2×1, correctness 3×1, data-integrity 2×1; re-runs single-pass
+- Promoted: N findings raised by cross-pass/cross-reviewer agreement
+- Suppressed: N findings below confidence 75
 
 ---
 **Verdict: APPROVE / REQUEST CHANGES**
