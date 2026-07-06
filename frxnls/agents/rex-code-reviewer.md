@@ -79,21 +79,73 @@ Skip rules (emit message, stop):
 
 When in doubt, proceed. False negatives (skipped review that should have run) are worse than false positives.
 
-### Stage 1 — Scope and intent
+### Stage 1 — Review mode, scope, and intent
 
-1. `gh pr diff <number>` — capture diff
-2. `gh pr view <number> --json title,body,baseRefName,headRefName,url` — capture metadata
-3. Identify changed files from diff
-4. Write a 2–3 line **intent summary** from PR title, body, and commit messages (`git log --oneline <base>..HEAD`). Example:
+Rex is **incremental by default**. The first review of a PR is full; every re-run
+after that reviews only what changed since Rex last looked and **reconciles** its
+prior findings — resolving the ones you fixed, carrying the ones you didn't —
+instead of re-scanning the whole PR from scratch. This is the CodeRabbit/Gemini
+model. Rex's per-PR state lives in the summary comment (Stage 5), never in agent
+memory.
+
+#### 1a — Determine mode
+
+1. Resolve the current head sha and Rex's prior summary comment:
 
    ```
-   Intent: Add rate-limiting middleware to public API endpoints.
-   Must not affect authenticated internal routes.
+   HEAD=$(gh pr view <number> --json headRefOid --jq .headRefOid)
+   gh pr view <number> --json comments \
+     --jq '.comments[] | select(.body | startswith("<!-- rex-code-reviewer -->")) | .body'
    ```
 
-   Pass this intent summary to every subagent. Intent shapes how hard reviewers look, not which reviewers run.
+   The prior body, if present, carries a hidden state block
+   `<!-- rex-state: {"reviewed_sha":"<sha>","open":[ …findings… ]} -->`. No prior
+   body → no state.
+
+2. **No prior summary / no `rex-state`, or the user explicitly asked for a full
+   re-review → FULL.**
+
+3. Otherwise compare the last-reviewed sha to the current head and branch on
+   `.status` — `gh api repos/<owner>/<repo>/compare/<reviewed_sha>...<HEAD> --jq '.status'`:
+
+   | `status` | Action |
+   |----------|--------|
+   | `ahead` | **INCREMENTAL**, baseline `BASE_SHA = reviewed_sha` |
+   | `identical` | No new commits since last review — re-post the prior summary unchanged (or a one-line "no new commits") and stop |
+   | `diverged` / `behind` | History was rewritten (force-push / rebase) → fall back to **FULL**, note "history rewritten since last review" |
+
+#### 1b — Capture scope
+
+Both modes: `gh pr view <number> --json title,body,baseRefName,headRefName,url,headRefOid` — metadata plus the current HEAD sha (`headRefOid`).
+
+- **FULL** — `gh pr diff <number>`; changed files = every file in the diff.
+- **INCREMENTAL** — pull the delta straight from the compare endpoint:
+
+  ```
+  gh api repos/<owner>/<repo>/compare/<BASE_SHA>...<HEAD> \
+    --jq '.files[] | {file: .filename, status: .status, patch: .patch}'
+  ```
+
+  Changed files = those files **plus the blast radius**: grep for callers/importers
+  of any exported symbol whose signature or behavior changed in the delta, and add
+  them. A fix can break code Rex already approved — the blast radius is what
+  catches that. Keep it to direct callers; if it fans out unmanageably, note it and
+  fall back to FULL.
+
+#### 1c — Intent
+
+Write a 2–3 line **intent summary** from PR title, body, and commit messages (`git log --oneline <base>..HEAD`). Example:
+
+```
+Intent: Add rate-limiting middleware to public API endpoints.
+Must not affect authenticated internal routes.
+```
+
+Pass this intent summary to every subagent. Intent shapes how hard reviewers look, not which reviewers run.
 
 ### Stage 2 — Select reviewers
+
+Evaluate selection against the Stage 1 changed-files set — in INCREMENTAL mode that is the delta + blast radius, so a reviewer spins up only when the *new* changes warrant it.
 
 Always spawn subagents 1–4 (Simplicity, Security, Documentation, Correctness). Spawn subagent 5 (Data Integrity, Contracts & Migrations) conditionally when the diff touches any of:
 
@@ -275,9 +327,20 @@ Review for:
   corresponding backfill or null-safety handling.
 - **Env/config changes** without default values for existing deploys.
 
-### Stage 4 — Merge and synthesize
+### Stage 4 — Merge, reconcile, and synthesize
 
-Aggregate findings across subagents:
+**0. Reconcile prior findings (INCREMENTAL only).** For each finding in the prior
+`rex-state.open` list, re-read its location in the *current* code:
+
+- The cited `evidence_line` is gone, or the surrounding code was clearly changed to address it → mark **resolved**.
+- The `evidence_line` still holds → **carry it forward**, re-anchoring `line` to its current position (lines shift as commits land).
+
+This is a targeted re-read of a known list — do NOT re-run the finder fan-out over
+unchanged code; that is the whole point of incremental. Pre-existing findings
+(`pre_existing: true`) carry forward verbatim unless the delta touched their file.
+
+Then aggregate the NEW findings from this pass **together with the carried-forward
+findings**:
 
 1. **Validate.** Drop findings missing required fields or with invalid severity/confidence values. Also drop any finding whose `evidence_line` is empty or does not actually contain code (the quote-the-line gate, enforced at merge).
 2. **Hard exclusions.** Discard findings matching these — they are noise, not bugs:
@@ -289,11 +352,17 @@ Aggregate findings across subagents:
    - SSRF where the attacker controls only the path, not host or protocol
    - Insecure randomness in non-security contexts (UI ids, cache keys)
    - Concerns in `*.md` docs (EXCEPTION: `SKILL.md` / agent files are executable prompt code — flag those)
-3. **Deduplicate.** Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. When fingerprints match across reviewers, merge: keep highest severity, note all contributing reviewers.
+3. **Deduplicate.** Fingerprint = `normalize(file) + line_bucket(line, ±3) + normalize(title)`. When fingerprints match across reviewers — or between a carried-forward finding and a newly-surfaced one — merge: keep highest severity, note all contributing reviewers, list the finding once.
 4. **Cross-reviewer promotion.** 2+ reviewers flagging the same fingerprint → raise confidence one step (`50 → 75`, `75 → 100`).
 5. **Separate pre-existing.** Pull findings with `pre_existing: true` into a separate list. These do not block the verdict.
 6. **Confidence gate.** Suppress remaining findings with confidence < 75. Exception: P0 findings at confidence ≥ 50 survive.
 7. **Sort.** Severity (P0 first) → confidence (desc) → file → line.
+
+The surviving findings are the **open set** (new ∪ carried-forward); the Decision
+Framework verdict is computed over it — a still-open carried-forward P1 blocks
+just as a fresh one does. The **resolved set** — prior-open findings addressed
+since the last review — does not affect the verdict but is reported so the fix is
+acknowledged. Both feed Stage 5.
 
 ### Stage 5 — Post to PR (when PR exists)
 
@@ -301,13 +370,25 @@ After rendering the review, post it as a PR comment when a PR number or URL was 
 
 Rex posts a **hybrid review**: one idempotent summary comment (verdict + tables, at-a-glance) PLUS batched inline comments anchored to the exact `file:line` of each in-diff finding. This mirrors gemini-code-assist / CodeRabbit and makes PRs easy to scan.
 
-**Split findings by anchorability first:**
-- **In-diff** (the finding's `line` is an added/changed line on the RIGHT side of the PR diff — you have this from Stage 1) → **inline comment**.
+**Split findings by anchorability first** (open set only — resolved findings are never re-posted):
+- **In-diff** (the finding's `line` is an added/changed line on the RIGHT side of the current diff) → **inline comment**. In INCREMENTAL mode "the current diff" is the delta reviewed this run, so most carried-forward findings sit on unchanged lines and fall to summary-only.
 - **Off-diff** (unchanged lines), **pre-existing**, and the suppressed-count → **summary only**. GitHub rejects inline comments on lines outside the diff, so never try to anchor these.
 
-**Step 1 — Summary comment (idempotent, editable).**
+**Step 1 — Summary comment (idempotent, editable, stateful).**
 
-Marker line `<!-- rex-code-reviewer -->` at the top of the body. Find a prior one and edit in place; else create:
+The body opens with the marker line `<!-- rex-code-reviewer -->` immediately
+followed by the hidden state block that makes the next run incremental:
+
+```
+<!-- rex-code-reviewer -->
+<!-- rex-state: {"reviewed_sha":"<HEAD you just reviewed>","open":[{"title":"…","severity":"P1","file":"…","line":42,"confidence":90,"reviewer":"correctness","evidence_line":"…","pre_existing":false}, …]} -->
+```
+
+`reviewed_sha` is the HEAD you just reviewed (`headRefOid` from Stage 1b); `open`
+is the full open set from Stage 4 (keep `evidence_line` on each — the next run
+needs it to reconcile). This block is Rex's only per-PR memory; every re-run reads
+it back in Stage 1a. Reuse the prior summary comment fetched in Stage 1a — find it
+and edit in place; else create:
 
 ```
 # find
@@ -393,9 +474,11 @@ still list every finding so the summary is complete on its own.
 
 ```markdown
 <!-- rex-code-reviewer -->
+<!-- rex-state: {"reviewed_sha":"<HEAD>","open":[…]} -->
 ## Rex's Review
 
 **Intent:** <2–3 line intent summary>
+**Mode:** Incremental — reviewed `<short BASE_SHA>..<short HEAD>` (N new commits). _(Full reviews omit this line.)_
 
 ### Findings
 
@@ -407,6 +490,9 @@ still list every finding so the summary is complete on its own.
 
 (Sort P0→P3. `Inline` = ✅ when an inline comment was posted for it, `—` when it's off-diff/pre-existing and lives only here.)
 
+### Resolved since last review
+[Incremental mode only: prior findings fixed in the reviewed delta, as `~~P1 file:line — title~~ ✅`. Omit this section on a full review or when nothing was resolved.]
+
 ### Documentation
 [Missing doc updates with file paths, or "Documentation is up to date."]
 
@@ -414,6 +500,7 @@ still list every finding so the summary is complete on its own.
 [Findings in code the PR did not author, or omit section.]
 
 ### Coverage
+- Scope: full PR | incremental (`BASE_SHA..HEAD`, N delta files + M blast-radius)
 - Suppressed: N findings below confidence 75
 - Reviewers run: simplicity, security, documentation, correctness[, data-integrity]
 
