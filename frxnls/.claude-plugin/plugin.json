@@ -1,7 +1,7 @@
 {
   "name": "frxnls",
   "description": "Frictionless personal toolkit: fx-triage, fx-plan, fx-ship, fx-debug, fx-teardown, fx-qa-web, fx-qa-mobile-ios, fx-brainstorm, fx-compound, fx-security-audit, fx-expo-worktree-dev skills and the rex-code-reviewer, plan-implementer, plan-implementer-backend, fx-repo-research + fx-learnings-research agents.",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "author": {
     "name": "Miguel Zakharia"
   }

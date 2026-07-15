@@ -10,6 +10,18 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.17.0] — 2026-07-15
+
+### Changed
+- **`fx-ship`** — the review step (5) now **runs `frxnls:rex-code-reviewer` on each PR
+  automatically** as a normal step, instead of describing it as an optional parenthetical
+  pass. The orchestrator was conflating *running Rex* (read-only analysis that emits an
+  `APPROVE`/`REQUEST CHANGES` verdict) with *approving/merging its own PR* — so it would
+  refuse with an invented "won't self-approve my own PR's gate / Awaiting local Rex" and
+  leave the review perpetually pending. Step 5 now states plainly that generating the
+  review is analysis for the human, not self-approval and not a merge; there is no
+  local-Rex gate to wait on; and the **only** human gate remains the merge (step 9).
+
 ## [0.12.0] — 2026-06-22
 
 ### Changed
