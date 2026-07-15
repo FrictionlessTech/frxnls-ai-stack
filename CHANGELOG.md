@@ -22,6 +22,52 @@ _Nothing yet._
   review is analysis for the human, not self-approval and not a merge; there is no
   local-Rex gate to wait on; and the **only** human gate remains the merge (step 9).
 
+## [0.16.0] — 2026-07-06
+
+### Changed
+- **`rex-code-reviewer`** — partitioned ensemble for the three variance-driven finders,
+  to front-load recall so a single review stops dripping findings across multiple runs.
+  On a **full** review, correctness / security / data-integrity now fan out into
+  partitioned passes (each aimed at a different failure class); simplicity and
+  documentation stay single-pass. Stage 3 gains a fan-out table with two dials —
+  partitions (breadth) and rolls/partition (depth), full-review passes = partitions ×
+  rolls (defaults: security 2×1, correctness 3×1, data-integrity 2×1). Stage 4 unions
+  all passes and extends cross-reviewer promotion to cross-pass agreement, so a
+  corroborated confidence-50 finding is promoted rather than lowering the gate.
+  Incremental re-runs stay single-pass over the delta, so the ensemble cost is paid
+  once on the first full review.
+
+## [0.15.0] — 2026-07-06
+
+### Changed
+- **`rex-code-reviewer`** — incremental-by-default reviews with stateful reconciliation
+  (CodeRabbit/Gemini model). The first review is full; every re-run compares the
+  last-reviewed sha to HEAD, reviews only the new commits plus the blast radius of
+  changed symbols, and reconciles prior findings — resolving fixed ones, carrying
+  still-open ones — instead of re-scanning the whole PR. Stage 1 determines mode via the
+  GitHub compare API (ahead → incremental; identical → no-op; diverged/behind → full
+  fallback); Stage 4 re-checks prior open findings and computes the verdict over new +
+  carried-forward; Stage 5 persists per-PR state in a hidden `rex-state` block inside the
+  idempotent summary comment (Rex's only memory) and adds a Resolved section.
+
+## [0.14.0] — 2026-07-04
+
+### Changed
+- **Sonnet agents** — reverted the v0.13.0 pin: `plan-implementer`,
+  `plan-implementer-backend`, `fx-repo-research`, `fx-learnings-research`,
+  `rex-code-reviewer`, and rex's Sonnet subagent dispatch prose (Subagents 1, 4, 5) go
+  back to the rolling `sonnet` alias as the default.
+
+## [0.13.0] — 2026-07-02
+
+### Changed
+- **Sonnet agents** — pinned the rolling `sonnet` alias to the explicit
+  `claude-sonnet-4-6` model ID in the five agents that run on Sonnet
+  (`plan-implementer`, `plan-implementer-backend`, `fx-repo-research`,
+  `fx-learnings-research`, `rex-code-reviewer`) and in rex's Sonnet subagent dispatch
+  prose (Subagents 1, 4, 5). Opus/Haiku subagents left as aliases. _(Reverted in
+  v0.14.0.)_
+
 ## [0.12.0] — 2026-06-22
 
 ### Changed
