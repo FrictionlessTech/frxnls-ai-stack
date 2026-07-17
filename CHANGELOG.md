@@ -10,6 +10,15 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.18.0] — 2026-07-17
+
+### Changed
+- **`fx-ship`** — reverted the v0.17.0 auto-run of `frxnls:rex-code-reviewer` in the
+  review step (5). The phantom "won't self-approve my own PR's gate / Awaiting local Rex"
+  behavior is now handled another way, so forcing a local Rex pass in fx-ship only
+  duplicated the effort. Step 5 goes back to describing the local pass as optional —
+  Rex CI still reviews each PR on open.
+
 ## [0.17.0] — 2026-07-15
 
 ### Changed

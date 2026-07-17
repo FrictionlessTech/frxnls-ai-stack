@@ -48,12 +48,8 @@ review and merge, then `fx-compound` captures what was learned.
    launched **in the workspace you created**. It works on that branch, strictly in
    scope, verifies until green, and opens the PR — it will **not** create or destroy
    any branch/worktree. Independent items in parallel; dependent ones serial.
-5. **Review** — **run `frxnls:rex-code-reviewer` on each PR automatically** as a normal
-   step (in addition to Rex CI, which also reviews on open). Running Rex is *read-only
-   analysis that produces a verdict for the human* — it is **not** self-approval and
-   **not** a merge. There is no "local-Rex" gate you must wait on and no self-approval
-   involved: generate the review, surface the verdict, and keep going. The only human
-   gate is the merge (step 9) — never confuse producing a review with approving the PR.
+5. **Review** — Rex CI reviews each PR automatically on open. (You can also run
+   `frxnls:rex-code-reviewer` on the PR for a local pass.)
 6. **QA** — from each PR's diff, pick the surface and run `fx-qa-web` and/or
    `fx-qa-mobile-ios` (mobile: use `fx-expo-worktree-dev` to get the app onto the sim).
 7. **Revisions** — for corrections after review/QA, **re-invoke the implementer on the
