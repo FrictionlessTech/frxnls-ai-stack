@@ -96,6 +96,8 @@ lookup, not a re-investigation. Two ways, by depth:
   **`fx-learnings-research`** agent with the problem context; it searches
   `docs/solutions/`, `CONCEPTS.md`, git history, and related issues and returns matches.
 
+**Resolve the model before dispatch.** Resolve via `python3 "<skill-base>/../../scripts/resolve-model.py" <agent-name>` (skills know their injected base directory), pass the result as the Agent tool's `model` parameter, and mention it in the dispatch announcement. If the resolver script is missing or errors, omit `model` — the agent's frontmatter default applies.
+
 If a documented learning matches, read it — apply its known fix/diagnosis directly and
 jump toward Phase 3/4, confirming it still reproduces and that the fix still applies
 (stale docs reflect what was true when written). If it's a near-miss, carry it as a

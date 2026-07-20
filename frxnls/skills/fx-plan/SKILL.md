@@ -132,6 +132,8 @@ origin doc, or the feature description). Dispatch in parallel via the `Agent` to
   `docs/solutions/` learnings, refresh candidates, domain vocabulary from
   `CONCEPTS.md`, and related issues.
 
+**Resolve the model before dispatch.** Resolve via `python3 "<skill-base>/../../scripts/resolve-model.py" <agent-name>` (skills know their injected base directory), pass the result as the Agent tool's `model` parameter, and mention it in the dispatch announcement. If the resolver script is missing or errors, omit `model` — the agent's frontmatter default applies.
+
 If `CONCEPTS.md` exists, plan in its vocabulary.
 
 **1.2 Decide on external research.** An **explicit** request (or origin doc asking

@@ -10,6 +10,43 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.19.0] — 2026-07-20
+
+### Added
+- **Install-site model configuration.** Every model assignment the plugin makes — the
+  five agent frontmatters and Rex's five finder perspectives — now resolves from one
+  canonical map (`frxnls/model-defaults.json`) through a deterministic, never-failing
+  python3 resolver (`frxnls/scripts/resolve-model.py`), overridable per install site via
+  `.frxnls/model-tiers.json`. Wired at every frxnls spawn site: Rex's finder fan-out
+  (with resolved models in the summary's Coverage `Models:` line), `fx-plan`,
+  `fx-compound`, `fx-debug`, `fx-triage`'s research-agent dispatches, and `fx-ship`'s
+  interactive and batch (`ship-batch.workflow.js`) implementer spawns. A missing,
+  unreadable, or malformed config — or an unknown key/value — degrades silently to the
+  repo default; resolution never blocks a spawn. `resolve-model.py --check` lints agent
+  frontmatter against the defaults map. Two example configs
+  (`examples/model-tiers.high-stakes.json`, `examples/model-tiers.side-project.json`)
+  and a README "Model configuration" section document the key table and fallback
+  contract. `fx-security-audit`'s ad-hoc verifier sub-task intentionally has no
+  canonical key and continues to inherit the session default. The bare
+  `rex-code-reviewer` key is lint-only (`--check` only) — no flow in this repo
+  resolves it at spawn time before invoking Rex itself. Rex's fan-out dials
+  (partitions/rolls) remain **not** configurable — models only.
+
+### Fixed
+- **`resolve-model.py`** — a non-string `.frxnls/model-tiers.json` override value
+  (e.g. a list or object) no longer crashes resolution with an unhandled
+  `TypeError`; it's now treated the same as any other invalid alias (falls back
+  to the default, warns). Warnings about invalid/unknown config content no
+  longer echo attacker-controlled config text verbatim (fixed-vocabulary
+  messages only) — closes an indirect prompt-injection path where a PR's own
+  `.frxnls/model-tiers.json` could otherwise land arbitrary text in Rex's
+  review summary. `--check` now also flags an `agents/*.md` file that has a
+  frontmatter `model:` but no matching `model-defaults.json` key, and tolerates
+  a trailing `# comment` after the frontmatter's `model:` value.
+- **`ship-batch.workflow.js`** — validates a resolved model against the known
+  aliases before passing it to `agent()`'s `model:` option; an invalid value is
+  omitted rather than passed through.
+
 ## [0.18.0] — 2026-07-17
 
 ### Changed

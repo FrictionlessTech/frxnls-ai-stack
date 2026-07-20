@@ -96,6 +96,8 @@ say so — that item is a _lookup_, not a fresh investigation (the `fx-compound`
 `CONCEPTS.md`. For a non-trivial match, dispatch the **`fx-learnings-research`**
 agent.
 
+**Resolve the model before dispatch.** Resolve via `python3 "<skill-base>/../../scripts/resolve-model.py" <agent-name>` (skills know their injected base directory), pass the result as the Agent tool's `model` parameter, and mention it in the dispatch announcement. If the resolver script is missing or errors, omit `model` — the agent's frontmatter default applies.
+
 **Optional MCP enrichment (use if the tool resolves; otherwise note absent):**
 
 - **Sentry** (`mcp__*Sentry*__search_issues` / `search_events`): unresolved or

@@ -114,6 +114,8 @@ Launch in parallel via the `Agent` tool (skip in Lightweight mode):
   pin the exact component, confirm the affected files, or name the pattern) — pass
   the problem context and scope `patterns`.
 
+**Resolve the model before dispatch.** Resolve via `python3 "<skill-base>/../../scripts/resolve-model.py" <agent-name>` (skills know their injected base directory), pass the result as the Agent tool's `model` parameter, and mention it in the dispatch announcement. If the resolver script is missing or errors, omit `model` — the agent's frontmatter default applies.
+
 Wait for both to return before assembling.
 
 ### Phase 2 — Classify, assemble, write

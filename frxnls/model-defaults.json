@@ -1,0 +1,12 @@
+{
+  "plan-implementer": "sonnet",
+  "plan-implementer-backend": "sonnet",
+  "fx-repo-research": "sonnet",
+  "fx-learnings-research": "sonnet",
+  "rex-code-reviewer": "sonnet",
+  "rex-code-reviewer.simplicity": "sonnet",
+  "rex-code-reviewer.security": "opus",
+  "rex-code-reviewer.documentation": "haiku",
+  "rex-code-reviewer.correctness": "sonnet",
+  "rex-code-reviewer.data-integrity": "sonnet"
+}

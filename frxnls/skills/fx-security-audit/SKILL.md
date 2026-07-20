@@ -106,7 +106,7 @@ Run every candidate through this before it becomes a finding.
 
 **Variant analysis:** when a finding is VERIFIED, Grep the whole codebase (or diff, in `--diff` mode) for the same pattern — one confirmed SSRF often means more. Report variants linked to the original.
 
-**Independent verifier (if Agent tool available):** for each surviving candidate, launch a fresh-context sub-task given ONLY `file:line` + the FP rules (no anchoring to your reasoning), prompted to refute: "is there a real vuln here? score 1-10; below 8 explain why not." Run in parallel; discard findings the verifier scores below the gate. If the Agent tool is unavailable, self-verify with a skeptic's eye and note it.
+**Independent verifier (if Agent tool available):** for each surviving candidate, launch a fresh-context sub-task given ONLY `file:line` + the FP rules (no anchoring to your reasoning), prompted to refute: "is there a real vuln here? score 1-10; below 8 explain why not." Run in parallel; discard findings the verifier scores below the gate. If the Agent tool is unavailable, self-verify with a skeptic's eye and note it. This verifier is an ad-hoc sub-task with no canonical model-resolution key (unlike the named research agents) — it intentionally omits `model` and inherits the session default; do not invent a key for it.
 
 ## Phase 12: Report
 
