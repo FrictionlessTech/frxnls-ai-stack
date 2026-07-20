@@ -1,13 +1,20 @@
 // Batch implementer for the frxnls `fx-ship` skill.
-// Run via the Workflow tool: pass this file's contents as `script` and the list of
-// work items as `args`, e.g. args = ["#40", "#41", ".claude/plans/add-orders.md"].
+// Run via the Workflow tool: pass this file's contents as `script` and the work items
+// as `args`, either the plain array (backward-compatible) or
+// `{ items: [...], models: {...} }` — where `models` is the resolved key->model map
+// from `resolve-model.py --all` (SKILL.md resolves it once before launching; workflow
+// scripts can't shell out themselves). `models` is optional — omit it (or pass `{}`)
+// to inherit the session default for every implementer spawn, e.g.
+// args = ["#40", "#41", ".claude/plans/add-orders.md"], or
+// args = { items: ["#40", "#41"], models: { "plan-implementer": "sonnet", "plan-implementer-backend": "opus" } }.
 //
 // Per item, in parallel:
 //   1. PREPARE — classify backend-vs-generic AND create a dedicated git worktree on a
 //      fresh feature branch (the implementers are workspace-agnostic and never make
 //      branches/worktrees, so the batch sets the workspace up for them).
 //   2. IMPLEMENT — run the chosen implementer agent INSIDE that worktree; it works on
-//      the branch it was handed and opens its own PR.
+//      the branch it was handed and opens its own PR, spawned with its resolved model
+//      (from `models`, when provided).
 //
 // It STOPS at PRs: no QA, no merge. Rex CI reviews each PR on open. The worktrees
 // PERSIST (for revisions) — retire each later with /frxnls:fx-teardown.
@@ -47,9 +54,17 @@ const IMPLEMENT_SCHEMA = {
   required: ['status'],
 }
 
-const items = Array.isArray(args) ? args : (args ? [args] : [])
+const items = Array.isArray(args)
+  ? args
+  : Array.isArray(args && args.items)
+    ? args.items
+    : (args ? [args] : [])
+// Resolved key->model map from `resolve-model.py --all` (SKILL.md's batch step). Empty
+// when omitted or args was a plain array — every agent() call below then omits `model`
+// and the Workflow runtime inherits the session default (R8: never fail, never strand).
+const models = (args && !Array.isArray(args) && args.models) || {}
 if (!items.length) {
-  log('No items in args. Pass an array of issue refs / plan paths, e.g. ["#40","#41",".claude/plans/x.md"].')
+  log('No items in args. Pass an array of issue refs / plan paths, e.g. ["#40","#41",".claude/plans/x.md"], or { items: [...], models: {...} }.')
   return { items: 0, prs: [] }
 }
 log(`ship-batch: ${items.length} independent item(s), in parallel.`)
@@ -71,17 +86,25 @@ Report the absolute worktree path, the branch name, the chosen implementer, and 
     { label: `prepare ${item}`, phase: 'Prepare', schema: PREPARE_SCHEMA },
   ),
   // 2 — implement INSIDE that worktree, on the branch it was handed
-  (prep, item) => agent(
-    `cd into the worktree at "${prep.path}" — it is already checked out on feature branch "${prep.branch}". Implement this work item there, end-to-end: "${item}"${prep && prep.title ? ` (${prep.title})` : ''}. Work on the current branch (never create or remove worktrees/branches), implement strictly in scope, verify until green, open the PR, and report the PR URL.`,
-    {
-      label: `implement ${item}`,
-      phase: 'Implement',
-      agentType: (prep && prep.implementer) || 'frxnls:plan-implementer',
-      schema: IMPLEMENT_SCHEMA,
-    },
-  ),
+  (prep, item) => {
+    const agentType = (prep && prep.implementer) || 'frxnls:plan-implementer'
+    const implementerKey = agentType.replace(/^frxnls:/, '')
+    return agent(
+      `cd into the worktree at "${prep.path}" — it is already checked out on feature branch "${prep.branch}". Implement this work item there, end-to-end: "${item}"${prep && prep.title ? ` (${prep.title})` : ''}. Work on the current branch (never create or remove worktrees/branches), implement strictly in scope, verify until green, open the PR, and report the PR URL.`,
+      {
+        label: `implement ${item}`,
+        phase: 'Implement',
+        agentType,
+        schema: IMPLEMENT_SCHEMA,
+        model: models[implementerKey],
+      },
+    )
+  },
 )
 
 const prs = results.filter(Boolean)
-log(`ship-batch done: ${prs.length}/${items.length} processed. Rex CI reviews each PR on open; run fx-qa-web / fx-qa-mobile-ios interactively, and /frxnls:fx-teardown to retire each worktree.`)
+const modelsUsed = Object.keys(models).length
+  ? `models: ${JSON.stringify(models)}`
+  : 'models: session default (no .frxnls/model-tiers.json overrides resolved)'
+log(`ship-batch done: ${prs.length}/${items.length} processed (${modelsUsed}). Rex CI reviews each PR on open; run fx-qa-web / fx-qa-mobile-ios interactively, and /frxnls:fx-teardown to retire each worktree.`)
 return { items: items.length, prs }

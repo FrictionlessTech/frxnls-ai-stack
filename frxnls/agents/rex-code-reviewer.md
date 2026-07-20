@@ -162,6 +162,36 @@ When in doubt about whether subagent 5 applies, spawn it. DB-correctness misses 
 
 Each subagent must read the actual changed files (not just the diff). Launch concurrently.
 
+**Pre-step — resolve models.** Before spawning, resolve every finder's model in one call
+so the install site's `.frxnls/model-tiers.json` (if any) governs this run. Locate the
+resolver via this fallback chain — any step failing degrades to the next, and the last
+step never fails (R8):
+
+1. `$CLAUDE_PLUGIN_ROOT/scripts/resolve-model.py`, if `$CLAUDE_PLUGIN_ROOT` is set.
+2. Else the newest version-sorted match of
+   `~/.claude/plugins/cache/frxnls/frxnls/*/scripts/resolve-model.py`.
+3. Else skip resolution and use the prose defaults table below as-is.
+
+When a resolver is found, run it once: `python3 <resolver-path> --all`. This prints the
+full resolved key→model JSON map (or, on a malformed/unreadable
+`.frxnls/model-tiers.json`, the repo defaults with a warning on stderr — never a
+failure). Surface any stderr warning as a one-line note in the summary's Coverage
+section, but proceed with the review regardless.
+
+Prose defaults (last-resort fallback, must agree with `frxnls/model-defaults.json` —
+guarded by `resolve-model.py --check`):
+
+| Key | Default |
+|-----|---------|
+| `rex-code-reviewer.simplicity` | sonnet |
+| `rex-code-reviewer.security` | opus |
+| `rex-code-reviewer.documentation` | haiku |
+| `rex-code-reviewer.correctness` | sonnet |
+| `rex-code-reviewer.data-integrity` | sonnet |
+
+Pass each finder's resolved value as the Agent tool's `model` parameter on every pass
+(all rolls/partitions of a finder share that finder's resolved model).
+
 #### Fan-out policy (ensemble)
 
 The finder space for **correctness, security, and data-integrity** is large and
@@ -177,7 +207,8 @@ different failure class (divide-and-conquer for *breadth*) — and
 coverage for *depth*). `full-review passes = partitions × rolls/partition`. Do
 NOT re-run the identical prompt across partitions; each partition is a different
 lens. Raise **rolls/partition** only where a finder still drips *within* a slice,
-and keep it at 1 for the opus finder (security) unless a PR clearly warrants it.
+and keep it at 1 for the security finder (highest per-pass cost) unless a PR clearly
+warrants it.
 
 | Subagent | Partitions (full review) | Rolls / partition | Full passes | Incremental re-run |
 |----------|--------------------------|:-----------------:|:-----------:|--------------------|
@@ -234,7 +265,7 @@ Rules for subagents:
 - Omit findings with confidence below 50.
 - No prose outside the JSON.
 
-#### Subagent 1 — Code Simplicity (model: sonnet)
+#### Subagent 1 — Code Simplicity (default: sonnet — resolved at spawn, key `rex-code-reviewer.simplicity`)
 
 Review changed files for:
 - Unnecessary complexity, over-engineered abstractions
@@ -243,7 +274,7 @@ Review changed files for:
 - Dead code, debug statements, commented-out code, leftover TODOs
 - Overly clever code that could be written more readably
 
-#### Subagent 2 — Security (model: opus)
+#### Subagent 2 — Security (default: opus — resolved at spawn, key `rex-code-reviewer.security`)
 
 _On a FULL review this is partitioned per the Stage 3 fan-out table: partition (a) = the general checklist below; partition (b) = the LLM/AI-security block. Each partition runs `rolls/partition` times (default 1) and sees only its slice. On an incremental re-run, one pass covers both._
 
@@ -277,7 +308,7 @@ Review changed files for:
 
 Security findings default to P0 or P1.
 
-#### Subagent 3 — Documentation (model: haiku)
+#### Subagent 3 — Documentation (default: haiku — resolved at spawn, key `rex-code-reviewer.documentation`)
 
 Determine whether documentation should be updated.
 
@@ -298,7 +329,7 @@ Requirements:
 - If no clear doc target exists, say so explicitly — do not guess.
 - Do not require doc updates for pure internal refactors.
 
-#### Subagent 4 — Correctness & Runtime Safety (model: sonnet)
+#### Subagent 4 — Correctness & Runtime Safety (default: sonnet — resolved at spawn, key `rex-code-reviewer.correctness`)
 
 _On a FULL review this is partitioned per the Stage 3 fan-out table: (a) null/undefined/NaN + type-shape + error handling; (b) concurrency, races, resource lifecycle; (c) logic/edge cases + silently-passing test guards. Each partition runs `rolls/partition` times (default 1) and sees only its slice. On an incremental re-run, one pass covers all categories._
 
@@ -338,7 +369,7 @@ Default severity: data corruption or a persisted bad value → P0/P1; a crash or
 500 on a normal path → P1; a silently-passing test or a defensive-guard gap →
 P2. The quote-the-line gate applies in full.
 
-#### Subagent 5 — Data Integrity, Contracts & Migrations (model: sonnet, conditional)
+#### Subagent 5 — Data Integrity, Contracts & Migrations (default: sonnet, conditional — resolved at spawn, key `rex-code-reviewer.data-integrity`)
 
 Spawn only when Stage 2 triggers apply. _On a FULL review this is partitioned per the Stage 3 fan-out table: (a) FK / constraint / backfill / migration safety; (b) soft-delete leaks / sargability / pool exhaustion / API-contract drift. Each partition runs `rolls/partition` times (default 1). On an incremental re-run, one pass covers both._
 
@@ -551,9 +582,11 @@ still list every finding so the summary is complete on its own.
 ### Coverage
 - Scope: full PR | incremental (`BASE_SHA..HEAD`, N delta files + M blast-radius)
 - Reviewers run: simplicity, security, documentation, correctness[, data-integrity]
+- Models: simplicity=sonnet, security=opus, documentation=haiku, correctness=sonnet[, data-integrity=sonnet] _(resolved values — reflect `.frxnls/model-tiers.json` overrides when present)_
 - Ensemble (full review): partitions × rolls — security 2×1, correctness 3×1, data-integrity 2×1; re-runs single-pass
 - Promoted: N findings raised by cross-pass/cross-reviewer agreement
 - Suppressed: N findings below confidence 75
+[If `.frxnls/model-tiers.json` was present but malformed/unreadable, add one line: "Model config warning: `.frxnls/model-tiers.json` could not be read — used repo defaults."]
 
 ---
 **Verdict: APPROVE / REQUEST CHANGES**

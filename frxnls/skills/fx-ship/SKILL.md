@@ -48,6 +48,7 @@ review and merge, then `fx-compound` captures what was learned.
    launched **in the workspace you created**. It works on that branch, strictly in
    scope, verifies until green, and opens the PR — it will **not** create or destroy
    any branch/worktree. Independent items in parallel; dependent ones serial.
+   **Resolve the model before dispatch.** Resolve via `python3 "<skill-base>/../../scripts/resolve-model.py" <agent-name>` (skills know their injected base directory), pass the result as the Agent tool's `model` parameter, and mention it in the dispatch announcement. If the resolver script is missing or errors, omit `model` — the agent's frontmatter default applies.
 5. **Review** — Rex CI reviews each PR automatically on open. (You can also run
    `frxnls:rex-code-reviewer` on the PR for a local pass.)
 6. **QA** — from each PR's diff, pick the surface and run `fx-qa-web` and/or
@@ -66,9 +67,14 @@ review and merge, then `fx-compound` captures what was learned.
 For several **independent** items at once ("ship #40, #41, #42"), run the bundled
 Workflow instead of looping by hand:
 
+- **Resolve models once before launching.** Workflow scripts can't shell out, so
+  resolve the full map first: `python3 "<skill-base>/../../scripts/resolve-model.py" --all`.
+  If the resolver script is missing or errors, skip this step — the batch simply runs
+  with no `model` override (agent frontmatter defaults apply, per R8).
 - Read the sibling script [`ship-batch.workflow.js`](ship-batch.workflow.js) and pass
-  its contents to the **Workflow tool** (`script`), with `args` set to the list of
-  items, e.g. `["#40", "#41", ".claude/plans/x.md"]`.
+  its contents to the **Workflow tool** (`script`), with `args` set to
+  `{ items: [...], models: <the resolved map from the previous step, or omit it> }`,
+  e.g. `{ items: ["#40", "#41", ".claude/plans/x.md"], models: {"plan-implementer": "sonnet", "plan-implementer-backend": "opus", ...} }`.
 - It classifies and implements each item in parallel, **each in its own worktree**
   (the script sets `isolation: 'worktree'`, since implementers no longer self-isolate)
   — each opens its own PR.

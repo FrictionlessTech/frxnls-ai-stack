@@ -10,6 +10,26 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.19.0] — 2026-07-20
+
+### Added
+- **Install-site model configuration.** Every model assignment the plugin makes — the
+  five agent frontmatters and Rex's five finder perspectives — now resolves from one
+  canonical map (`frxnls/model-defaults.json`) through a deterministic, never-failing
+  python3 resolver (`frxnls/scripts/resolve-model.py`), overridable per install site via
+  `.frxnls/model-tiers.json`. Wired at every frxnls spawn site: Rex's finder fan-out
+  (with resolved models in the summary's Coverage `Models:` line), `fx-plan`,
+  `fx-compound`, `fx-debug`, `fx-triage`'s research-agent dispatches, and `fx-ship`'s
+  interactive and batch (`ship-batch.workflow.js`) implementer spawns. A missing,
+  unreadable, or malformed config — or an unknown key/value — degrades silently to the
+  repo default; resolution never blocks a spawn. `resolve-model.py --check` lints agent
+  frontmatter against the defaults map. Two example configs
+  (`examples/model-tiers.high-stakes.json`, `examples/model-tiers.side-project.json`)
+  and a README "Model configuration" section document the key table and fallback
+  contract. `fx-security-audit`'s ad-hoc verifier sub-task intentionally has no
+  canonical key and continues to inherit the session default. Rex's fan-out dials
+  (partitions/rolls) remain **not** configurable — models only.
+
 ## [0.18.0] — 2026-07-17
 
 ### Changed

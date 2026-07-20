@@ -188,6 +188,52 @@ claude plugin update frxnls@frxnls   # qualified name required; plain `frxnls` e
 
 Commit, push, then `marketplace update` + `plugin update` as above.
 
+## Model configuration
+
+Every model assignment the plugin makes — the five agents (`plan-implementer`,
+`plan-implementer-backend`, `fx-repo-research`, `fx-learnings-research`,
+`rex-code-reviewer`) and Rex's five finder perspectives — is one canonical map,
+[`frxnls/model-defaults.json`](frxnls/model-defaults.json), resolved at spawn time by
+[`frxnls/scripts/resolve-model.py`](frxnls/scripts/resolve-model.py) (python3 stdlib,
+no dependencies). Every skill/agent that spawns one of these resolves its model
+through that script before dispatching, so it's visible where the model came from.
+
+**Override at the install site** — add `.frxnls/model-tiers.json` at your repo's root,
+a flat JSON map of any subset of the keys below to a Claude Code model alias
+(`haiku` / `sonnet` / `opus`, not a pinned model ID). Partial configs are normal — set
+only the keys you want to change; anything you omit falls through to the repo default.
+
+| Key | Default |
+|-----|---------|
+| `plan-implementer` | sonnet |
+| `plan-implementer-backend` | sonnet |
+| `fx-repo-research` | sonnet |
+| `fx-learnings-research` | sonnet |
+| `rex-code-reviewer` | sonnet |
+| `rex-code-reviewer.simplicity` | sonnet |
+| `rex-code-reviewer.security` | opus |
+| `rex-code-reviewer.documentation` | haiku |
+| `rex-code-reviewer.correctness` | sonnet |
+| `rex-code-reviewer.data-integrity` | sonnet |
+
+Two worked examples: [`examples/model-tiers.high-stakes.json`](examples/model-tiers.high-stakes.json)
+(a production repo — backend implementer and security review both stay/move to `opus`)
+and [`examples/model-tiers.side-project.json`](examples/model-tiers.side-project.json)
+(a low-stakes repo — security review and the research scouts move down to
+`sonnet`/`haiku`). Copy whichever is closer to your repo's stakes and edit from there.
+
+**Never-fail fallback.** A missing config file, one that's unreadable or not valid
+JSON, an unknown key, or a value that isn't a known alias all degrade silently to the
+repo default for that key — a warning goes to stderr, but a spawn is never blocked or
+stranded without a model. There is no user-level config and no merge cascade: one
+override file, project-scoped, or nothing.
+
+```bash
+python3 frxnls/scripts/resolve-model.py rex-code-reviewer.security   # one alias, e.g. "opus"
+python3 frxnls/scripts/resolve-model.py --all                        # full resolved map, JSON
+python3 frxnls/scripts/resolve-model.py --check                      # lint: agent frontmatter vs the defaults map
+```
+
 ## CI: Rex as a PR-gating bot
 
 `examples/rex-review.yml` is a reference workflow that runs `frxnls:rex-code-reviewer`

@@ -4,6 +4,11 @@ One-time setup to run `frxnls:rex-code-reviewer` automatically on PRs as a bot
 identity. Pairs with `examples/rex-review.yml`. See the README "CI" section for the
 why/tradeoffs.
 
+**Model config:** Rex reads `.frxnls/model-tiers.json` from the *reviewed repo's
+checkout* at review time (see the README "Model configuration" section) — there is no
+separate bot-side setup for it. If the file is absent, unreadable, or malformed, Rex
+runs on the plugin's repo defaults; it never fails the run.
+
 ## 1. Register the GitHub App
 
 Go to `https://github.com/organizations/<org>/settings/apps/new`
