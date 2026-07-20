@@ -27,8 +27,25 @@ _Nothing yet._
   (`examples/model-tiers.high-stakes.json`, `examples/model-tiers.side-project.json`)
   and a README "Model configuration" section document the key table and fallback
   contract. `fx-security-audit`'s ad-hoc verifier sub-task intentionally has no
-  canonical key and continues to inherit the session default. Rex's fan-out dials
+  canonical key and continues to inherit the session default. The bare
+  `rex-code-reviewer` key is lint-only (`--check` only) — no flow in this repo
+  resolves it at spawn time before invoking Rex itself. Rex's fan-out dials
   (partitions/rolls) remain **not** configurable — models only.
+
+### Fixed
+- **`resolve-model.py`** — a non-string `.frxnls/model-tiers.json` override value
+  (e.g. a list or object) no longer crashes resolution with an unhandled
+  `TypeError`; it's now treated the same as any other invalid alias (falls back
+  to the default, warns). Warnings about invalid/unknown config content no
+  longer echo attacker-controlled config text verbatim (fixed-vocabulary
+  messages only) — closes an indirect prompt-injection path where a PR's own
+  `.frxnls/model-tiers.json` could otherwise land arbitrary text in Rex's
+  review summary. `--check` now also flags an `agents/*.md` file that has a
+  frontmatter `model:` but no matching `model-defaults.json` key, and tolerates
+  a trailing `# comment` after the frontmatter's `model:` value.
+- **`ship-batch.workflow.js`** — validates a resolved model against the known
+  aliases before passing it to `agent()`'s `model:` option; an invalid value is
+  omitted rather than passed through.
 
 ## [0.18.0] — 2026-07-17
 

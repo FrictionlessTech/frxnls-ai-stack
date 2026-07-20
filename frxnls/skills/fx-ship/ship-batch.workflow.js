@@ -42,6 +42,12 @@ const PREPARE_SCHEMA = {
   required: ['path', 'branch', 'implementer'],
 }
 
+// Mirrors resolve-model.py's KNOWN_ALIASES — defense-in-depth: `models` is expected
+// to come straight from `resolve-model.py --all`'s own validated output, but this
+// step is an LLM-driven SKILL.md prose instruction, not deterministic code, so a
+// bad/hand-built `args.models` map must not flow an invalid value into `agent()`.
+const KNOWN_MODEL_ALIASES = ['haiku', 'sonnet', 'opus']
+
 const IMPLEMENT_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -89,15 +95,21 @@ Report the absolute worktree path, the branch name, the chosen implementer, and 
   (prep, item) => {
     const agentType = (prep && prep.implementer) || 'frxnls:plan-implementer'
     const implementerKey = agentType.replace(/^frxnls:/, '')
+    const resolvedModel = models[implementerKey]
+    const options = {
+      label: `implement ${item}`,
+      phase: 'Implement',
+      agentType,
+      schema: IMPLEMENT_SCHEMA,
+    }
+    // Omit `model` entirely (not just leave it `undefined`) unless it's a known
+    // alias — an invalid value falls through to the agent's frontmatter default.
+    if (KNOWN_MODEL_ALIASES.includes(resolvedModel)) {
+      options.model = resolvedModel
+    }
     return agent(
       `cd into the worktree at "${prep.path}" — it is already checked out on feature branch "${prep.branch}". Implement this work item there, end-to-end: "${item}"${prep && prep.title ? ` (${prep.title})` : ''}. Work on the current branch (never create or remove worktrees/branches), implement strictly in scope, verify until green, open the PR, and report the PR URL.`,
-      {
-        label: `implement ${item}`,
-        phase: 'Implement',
-        agentType,
-        schema: IMPLEMENT_SCHEMA,
-        model: models[implementerKey],
-      },
+      options,
     )
   },
 )

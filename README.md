@@ -190,13 +190,24 @@ Commit, push, then `marketplace update` + `plugin update` as above.
 
 ## Model configuration
 
-Every model assignment the plugin makes — the five agents (`plan-implementer`,
-`plan-implementer-backend`, `fx-repo-research`, `fx-learnings-research`,
-`rex-code-reviewer`) and Rex's five finder perspectives — is one canonical map,
-[`frxnls/model-defaults.json`](frxnls/model-defaults.json), resolved at spawn time by
-[`frxnls/scripts/resolve-model.py`](frxnls/scripts/resolve-model.py) (python3 stdlib,
-no dependencies). Every skill/agent that spawns one of these resolves its model
-through that script before dispatching, so it's visible where the model came from.
+Every model assignment the plugin makes — four of the five agents
+(`plan-implementer`, `plan-implementer-backend`, `fx-repo-research`,
+`fx-learnings-research`) and Rex's five finder perspectives — is one canonical map,
+[`frxnls/model-defaults.json`](frxnls/model-defaults.json), resolved **at spawn
+time** by [`frxnls/scripts/resolve-model.py`](frxnls/scripts/resolve-model.py)
+(python3 stdlib, no dependencies). Every skill/agent that spawns one of these
+resolves its model through that script before dispatching, so it's visible where
+the model came from. `fx-security-audit`'s independent-verifier sub-task is
+intentionally the one exception — it's an ad-hoc, unkeyed dispatch with no
+canonical model key, so it inherits the session default rather than resolving one.
+
+The bare `rex-code-reviewer` key (top-level agent, distinct from its five
+`rex-code-reviewer.*` finder sub-keys below) is **lint-only today** —
+`resolve-model.py --check` verifies it against the agent's own frontmatter, but no
+flow in this repo actually resolves it at spawn time before invoking Rex itself
+(`examples/rex-review.yml` invokes `claude -p "Use the frxnls:rex-code-reviewer
+agent..."` directly, with no resolver step). Setting it in
+`.frxnls/model-tiers.json` is a no-op until a spawn site is wired for it.
 
 **Override at the install site** — add `.frxnls/model-tiers.json` at your repo's root,
 a flat JSON map of any subset of the keys below to a Claude Code model alias
@@ -209,7 +220,7 @@ only the keys you want to change; anything you omit falls through to the repo de
 | `plan-implementer-backend` | sonnet |
 | `fx-repo-research` | sonnet |
 | `fx-learnings-research` | sonnet |
-| `rex-code-reviewer` | sonnet |
+| `rex-code-reviewer` (lint-only — see above) | sonnet |
 | `rex-code-reviewer.simplicity` | sonnet |
 | `rex-code-reviewer.security` | opus |
 | `rex-code-reviewer.documentation` | haiku |

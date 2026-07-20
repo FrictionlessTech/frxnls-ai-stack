@@ -37,7 +37,7 @@ import sys
 KNOWN_ALIASES = {"haiku", "sonnet", "opus"}
 DEFAULT_FALLBACK = "sonnet"
 CONFIG_RELATIVE_PATH = os.path.join(".frxnls", "model-tiers.json")
-FRONTMATTER_MODEL_RE = re.compile(r'^model:\s*"?([A-Za-z0-9_-]+)"?\s*$')
+FRONTMATTER_MODEL_RE = re.compile(r'^model:\s*"?([A-Za-z0-9_-]+)"?\s*(#.*)?$')
 
 
 def _script_dir() -> str:
@@ -86,29 +86,38 @@ def load_config(repo_root: str) -> dict:
     try:
         with open(config_path) as f:
             data = json.load(f)
-    except Exception as e:
+    except Exception:
+        # Fixed-vocabulary message only — never echo the exception text, which could
+        # embed a fragment of the (potentially attacker-authored) config content.
         sys.stderr.write(
-            f"resolve-model: {config_path} is unreadable or malformed ({e}); "
-            "using repo defaults.\n"
+            f"resolve-model: warning: {CONFIG_RELATIVE_PATH} is unreadable or not "
+            "valid JSON; using repo defaults.\n"
         )
         return {}
     if not isinstance(data, dict):
         sys.stderr.write(
-            f"resolve-model: {config_path} does not contain a JSON object; "
-            "using repo defaults.\n"
+            f"resolve-model: warning: {CONFIG_RELATIVE_PATH} does not contain a "
+            "JSON object; using repo defaults.\n"
         )
         return {}
     return data
 
 
 def _resolve_known(key: str, default_value: str, config: dict) -> str:
+    """`key` here is always a name drawn from `model-defaults.json` (fixed,
+    plugin-controlled vocabulary) — safe to echo. `value` comes straight from the
+    project's `.frxnls/model-tiers.json` and may be attacker-controlled (a PR can
+    ship its own config file); it is NEVER echoed to stderr, and its type is never
+    trusted — `value in KNOWN_ALIASES` alone would raise TypeError for an
+    unhashable override (a list/dict), which the `isinstance` guard prevents."""
     if key in config:
         value = config[key]
-        if value in KNOWN_ALIASES:
+        if isinstance(value, str) and value in KNOWN_ALIASES:
             return value
         sys.stderr.write(
-            f"resolve-model: override '{key}: {value}' is not a known alias "
-            f"(haiku/sonnet/opus); using default '{default_value}'.\n"
+            f"resolve-model: warning: ignored invalid value for key '{key}' in "
+            f"{CONFIG_RELATIVE_PATH} (not a known alias: haiku/sonnet/opus); "
+            "using default.\n"
         )
     return default_value
 
@@ -123,14 +132,17 @@ def resolve_key(key: str, defaults: dict, config: dict) -> str:
     return _resolve_known(key, defaults[key], config)
 
 
-def resolve_all(defaults: dict, config: dict, repo_root: str) -> dict:
+def resolve_all(defaults: dict, config: dict) -> dict:
     resolved = {key: _resolve_known(key, value, config) for key, value in defaults.items()}
-    config_path = os.path.join(repo_root, CONFIG_RELATIVE_PATH)
-    for key in config:
-        if key not in defaults:
-            sys.stderr.write(
-                f"resolve-model: unknown key '{key}' in {config_path}; ignoring.\n"
-            )
+    # Count only — never echo the unknown key names themselves. They come straight
+    # from the project's .frxnls/model-tiers.json, which a PR could author, so an
+    # arbitrary/attacker-chosen key string must never be surfaced verbatim.
+    unknown_count = sum(1 for key in config if key not in defaults)
+    if unknown_count:
+        sys.stderr.write(
+            f"resolve-model: warning: ignored {unknown_count} unknown key(s) in "
+            f"{CONFIG_RELATIVE_PATH}.\n"
+        )
     return resolved
 
 
@@ -162,10 +174,15 @@ def run_check() -> int:
         if not filename.endswith(".md"):
             continue
         agent_key = filename[: -len(".md")]
-        if agent_key not in defaults:
-            continue
         path = os.path.join(agents_dir, filename)
         model = parse_frontmatter_model(path)
+        if agent_key not in defaults:
+            if model is not None:
+                drift.append(
+                    f"{path}: has frontmatter 'model: {model}' but no corresponding "
+                    f"key '{agent_key}' in model-defaults.json"
+                )
+            continue
         if model is None:
             drift.append(f"{path}: no 'model:' frontmatter field found")
         elif model != defaults[agent_key]:
@@ -218,7 +235,7 @@ def main(argv: list) -> int:
     config = load_config(repo_root)
 
     if args.all:
-        resolved = resolve_all(defaults, config, repo_root)
+        resolved = resolve_all(defaults, config)
         print(json.dumps(resolved, sort_keys=True))
         return 0
 
