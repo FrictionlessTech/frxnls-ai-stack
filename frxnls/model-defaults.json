@@ -8,5 +8,8 @@
   "rex-code-reviewer.security": "opus",
   "rex-code-reviewer.documentation": "haiku",
   "rex-code-reviewer.correctness": "sonnet",
-  "rex-code-reviewer.data-integrity": "sonnet"
+  "rex-code-reviewer.data-integrity": "sonnet",
+  "fx-lane-researcher": "sonnet",
+  "fx-risk-researcher": "opus",
+  "fx-screen-scout": "haiku"
 }
