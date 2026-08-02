@@ -10,6 +10,63 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.20.0] — 2026-08-02
+
+### Added
+- **Venture discovery loop — `fx-idea-scout` → `fx-market-research` → `fx-go-nogo`.** A
+  three-skill research loop that runs *upstream* of the delivery pipeline: deciding
+  whether an idea is worth building, before `fx-brainstorm` starts on what and how.
+  `fx-idea-scout` generates candidates (open mode) or frames the one you brought
+  (targeted mode) and cheaply screens them — accounts-needed math, publicly verbalized
+  demand graded observed/adjacent/speculated, a named channel, constraint fit — down to a
+  2–3 idea shortlist. `fx-market-research` fans out seven independent lanes concurrently
+  (competitors, demand, bottom-up sizing, economics, risk, distribution, build/maintenance,
+  plus an optional switching-cost lane) into a sourced evidence dossier, and renders no
+  verdict. `fx-go-nogo` reads the full lane files and returns GO / CONDITIONAL GO / PIVOT /
+  NO-GO against a ten-dimension weighted scorecard, always naming what would change the
+  answer and the single cheapest next experiment with a pre-declared pass threshold.
+  The loop is deliberately **standalone** — it runs outside any product repo, since the
+  repo doesn't exist yet at decision time, and never writes to the working directory.
+  First run asks where ventures should live (default `~/ventures`), persists the answer to
+  `~/.frxnls/venture-home`, and resolves `$FX_VENTURE_HOME` ahead of it. `constraints.md`
+  and `_ledger.md` sit at that root so the ledger stays comparable across ventures and
+  years; per-venture deviations are recorded as overrides in each `brief.md` rather than by
+  editing the standing file. Three design constraints keep the verdict honest: kill
+  criteria are written into the brief *before* research begins and signed off by the user
+  at an explicit gate (so `fx-go-nogo` isn't grading against criteria it authored itself);
+  demand, distribution, and blocking risk are **gates rather than score components** —
+  failing one is a No-Go regardless of weighted total; and every quantitative claim carries
+  a `[CITED]`/`[DERIVED]`/`[ASSUMED]` tag, with sizing bottom-up from real registries only
+  and each lane required to report disconfirming evidence or state that it searched and
+  found none. On a Go, `fx-go-nogo` emits a portable `handoff.md` rather than invoking
+  `fx-brainstorm` — the user drops it into the new repo as `docs/brainstorms/<slug>.md`.
+  It carries the scorecard's low scores forward as known weaknesses, so the new repo
+  doesn't restart from the clean story and rediscover what this loop already paid to find.
+  Ships with `frxnls/templates/` scaffolds (`brief.md`, `constraints.md`,
+  `ledger-entry.md`) and per-skill references (`fx-market-research/references/lanes.md`,
+  `fx-go-nogo/references/scorecard.md`).
+- **Three research agents wired to the existing resolver** — `fx-lane-researcher`
+  (sonnet), `fx-risk-researcher` (opus), `fx-screen-scout` (haiku), with matching
+  `model-defaults.json` keys. Risk gets the top tier on the same reasoning as
+  `rex-code-reviewer.security`: it close-reads terms of service and licensing for the one
+  clause that disqualifies a business, and a cheaper model skimming past that sentence
+  invalidates every other lane's work. The venture skills resolve models through
+  `resolve-model.py` with `--repo-root` pinned to `$VENTURE_HOME`, since the loop runs
+  outside a git repo where the script's default root detection has nothing to find — which
+  also makes `$VENTURE_HOME/.frxnls/model-tiers.json` the override file for these three
+  keys. `fx-go-nogo` is intentionally unkeyed and runs on the session model: it's the
+  judgment step, and the one place in the loop where cheaping out is false economy.
+  `resolve-model.py --check` passes; `test_resolve_model.py` stays green at 15 tests.
+
+### Changed
+- **README** — documents the venture loop (flow diagram, `$VENTURE_HOME` layout and
+  resolution order, the three honesty mechanisms, the handoff into a new repo), adds the
+  six new components to the layout tree and component table, extends the model-configuration
+  key table to all 13 keys, and reframes `fx-triage` as the front of the *delivery
+  pipeline* now that the venture loop sits upstream of it. Also backfills `fx-debug`, which
+  shipped in 0.8.0 but was never added to the tree or the table.
+- `.gitignore` — ignore `.claude/`.
+
 ## [0.19.0] — 2026-07-20
 
 ### Added

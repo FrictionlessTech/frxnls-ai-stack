@@ -10,29 +10,42 @@ Miguel's personal Claude Code stack — skills and agents published under the
 frxnls/                           # the plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
+│   ├── fx-idea-scout/SKILL.md        # /frxnls:fx-idea-scout — generate/frame venture ideas → screened shortlist + brief
+│   ├── fx-market-research/           # /frxnls:fx-market-research — parallel research lanes → evidence dossier (SKILL.md + references/)
+│   ├── fx-go-nogo/                   # /frxnls:fx-go-nogo — dossier → scored go/no-go decision (SKILL.md + references/)
 │   ├── fx-triage/SKILL.md            # /frxnls:fx-triage — scan work sources → ranked digest (front of the loop)
 │   ├── fx-brainstorm/SKILL.md        # /frxnls:fx-brainstorm — adversarial first-principles interviewer
 │   ├── fx-plan/                      # /frxnls:fx-plan — idea → researched, implementation-ready plan (SKILL.md + references/)
 │   ├── fx-ship/                      # /frxnls:fx-ship — orchestrate plan/issue → PR (SKILL.md + ship-batch.workflow.js)
+│   ├── fx-debug/                     # /frxnls:fx-debug — root-cause a bug, then fix it (SKILL.md + references/)
 │   ├── fx-qa-web/SKILL.md            # /frxnls:fx-qa-web — browser QA via Playwright MCP
-│   ├── fx-qa-mobile-ios/SKILL.md     # /frxnls:fx-qa-mobile-ios — iOS Simulator QA via serve-sim
+│   ├── fx-qa-mobile-ios/             # /frxnls:fx-qa-mobile-ios — iOS Simulator QA via serve-sim (SKILL.md + references/)
 │   ├── fx-expo-worktree-dev/SKILL.md # /frxnls:fx-expo-worktree-dev — give the current worktree its own Expo sim+server
 │   ├── fx-teardown/SKILL.md          # /frxnls:fx-teardown — retire a task's worktree/branch (+ sim) post-merge
 │   ├── fx-compound/                  # /frxnls:fx-compound — capture a solved problem → docs/solutions/ (+ CONCEPTS.md)
 │   └── fx-security-audit/SKILL.md    # /frxnls:fx-security-audit — whole-system CSO audit
-└── agents/
-    ├── rex-code-reviewer.md       # frxnls:rex-code-reviewer — PR review agent
-    ├── plan-implementer.md        # frxnls:plan-implementer — executes a plan/issue → PR
-    ├── plan-implementer-backend.md # frxnls:plan-implementer-backend — backend/DB-safe executor → PR
-    ├── fx-repo-research.md        # frxnls:fx-repo-research — read-only codebase scout
-    └── fx-learnings-research.md   # frxnls:fx-learnings-research — read-only docs/solutions + history scout
+├── agents/
+│   ├── rex-code-reviewer.md        # frxnls:rex-code-reviewer — PR review agent
+│   ├── plan-implementer.md         # frxnls:plan-implementer — executes a plan/issue → PR
+│   ├── plan-implementer-backend.md # frxnls:plan-implementer-backend — backend/DB-safe executor → PR
+│   ├── fx-repo-research.md         # frxnls:fx-repo-research — read-only codebase scout
+│   ├── fx-learnings-research.md    # frxnls:fx-learnings-research — read-only docs/solutions + history scout
+│   ├── fx-lane-researcher.md       # frxnls:fx-lane-researcher — one market-research lane (sonnet)
+│   ├── fx-risk-researcher.md       # frxnls:fx-risk-researcher — regulatory/platform/legal risk lane (opus)
+│   └── fx-screen-scout.md          # frxnls:fx-screen-scout — cheap first-pass idea screen (haiku)
+├── templates/                     # venture-loop scaffolds: brief.md, constraints.md, ledger-entry.md
+├── model-defaults.json            # canonical agent → model map
+└── scripts/                       # resolve-model.py + its tests
 ```
 
 ## Components
 
 | Type  | Name                | Invoke                     | What it does |
 |-------|---------------------|----------------------------|--------------|
-| Skill | `fx-triage`            | `/frxnls:fx-triage`           | The **front of the loop**: scan work sources (GitHub issues/PRs/CI via `gh`; Sentry/Linear/etc. when those MCP connectors are present), rank what's actionable (P0–P3), cross-reference `docs/solutions/`, and surface a triage digest. Discovers and ranks — **never implements**; hands green-lit items to `fx-ship` / `fx-debug`. Runs interactively or **headless on a schedule** (cloud routine / local cron); `gh`-first so it degrades gracefully when MCP connectors are absent |
+| Skill | `fx-idea-scout`        | `/frxnls:fx-idea-scout`       | **Step 1 of the venture loop**: generate candidates (open mode) or frame the one you brought (targeted mode), then *cheaply* screen them — accounts-needed math, public demand evidence graded observed/adjacent/speculated, a named channel, constraint fit. Fans out `fx-screen-scout` per candidate. Ends at a shortlist plus a `brief.md` whose **kill criteria you sign off on before any research runs**. Screens, never researches deeply |
+| Skill | `fx-market-research`   | `/frxnls:fx-market-research`  | **Step 2**: fan out seven independent lanes concurrently — competitors, demand, bottom-up sizing, economics, risk, distribution, build/maintenance (plus an optional switching-cost lane) — into a sourced dossier under `<venture>/research/`. Every number is tagged `[CITED]`/`[DERIVED]`/`[ASSUMED]`, each lane must report disconfirming evidence, and inter-lane conflicts are surfaced rather than smoothed. Gathers evidence, **never decides** |
+| Skill | `fx-go-nogo`           | `/frxnls:fx-go-nogo`          | **Step 3**: reads the full lane files and renders **GO / CONDITIONAL GO / PIVOT / NO-GO** — pre-committed kill criteria checked first, then a 10-dimension weighted scorecard where every score cites its lane. Demand, distribution, and blocking risk are **gates, not averages**. Always names what would change the answer and the single cheapest next experiment *with a pre-declared pass threshold*. Writes `decision.md`, appends the ledger, and on a Go emits a portable `handoff.md` |
+| Skill | `fx-triage`            | `/frxnls:fx-triage`           | The **front of the delivery pipeline**: scan work sources (GitHub issues/PRs/CI via `gh`; Sentry/Linear/etc. when those MCP connectors are present), rank what's actionable (P0–P3), cross-reference `docs/solutions/`, and surface a triage digest. Discovers and ranks — **never implements**; hands green-lit items to `fx-ship` / `fx-debug`. Runs interactively or **headless on a schedule** (cloud routine / local cron); `gh`-first so it degrades gracefully when MCP connectors are absent |
 | Skill | `fx-qa-web`            | `/frxnls:fx-qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
 | Skill | `fx-qa-mobile-ios`     | `/frxnls:fx-qa-mobile-ios`    | QA an iOS app on the Simulator — drives it via [serve-sim](https://github.com/EvanBacon/serve-sim) (AX tree + tap/gesture/type, device logs), finds bugs with screenshot evidence, fixes at the RN source, re-verifies |
 | Skill | `fx-brainstorm` | `/frxnls:fx-brainstorm` | Adversarial Socratic interviewer — stress-tests an idea, kills complexity, ends with one concrete action. Optionally emits a structured `docs/brainstorms/*-requirements.md` (R/A/F/AE IDs) that `fx-plan` carries as its `origin:` |
@@ -40,6 +53,7 @@ frxnls/                           # the plugin
 | Skill | `fx-security-audit` | `/frxnls:fx-security-audit` | Whole-system "CSO" security audit (repo, git history, deps, CI/CD, infra, LLM, skills) — read-only findings report |
 | Skill | `fx-expo-worktree-dev` | `/frxnls:fx-expo-worktree-dev` | Idempotently give the **current** worktree its own Expo dev server + iOS simulator — reuses them if present, else spins up a dedicated device named `expo-wt-<branch>` (never shared with another worktree) and a free persisted port. Run once per worktree; parallel sims just fall out. Targets by UDID, prebuilds per worktree for dev clients |
 | Skill | `fx-ship` | `/frxnls:fx-ship` | Orchestrate a defined plan/issue → reviewed PR: **sets up the workspace (asks branch vs worktree)**, routes to `plan-implementer` vs `-backend`, runs matching QA (`fx-qa-web` / `fx-qa-mobile-ios`), surfaces Rex's review, keeps it alive for revisions, **stops before merge**. Bundles `ship-batch.workflow.js` for batch runs |
+| Skill | `fx-debug` | `/frxnls:fx-debug` | Root-cause a bug, then fix it — five phases (triage → investigate → root cause → fix → handoff) with a **causal-chain gate**: no fix proposed until the chain from trigger to symptom has no gaps, and uncertain links carry a testable prediction. Checks `docs/solutions/` in Phase 0 (so a documented bug is a lookup), reuses Playwright MCP / serve-sim for repro, hands off via `gh` + `fx-compound`. Adapted from Every's `ce-debug` |
 | Skill | `fx-teardown` | `/frxnls:fx-teardown` | Retire a finished task's workspace — remove its linked worktree, optionally delete the local branch, shut down its `expo-wt-*` sim. Run after the PR merges/aborts; never auto-runs, never touches the main checkout |
 | Skill | `fx-compound` | `/frxnls:fx-compound` | Capture a just-solved problem (or hard-won decision/pattern) as a durable learning in `docs/solutions/` with searchable frontmatter, and seed `CONCEPTS.md` vocabulary — so the next occurrence is a lookup, not a re-investigation. Full/Lightweight/headless modes; overlap-detects vs existing docs; `plan-implementer` + `fx-learnings-research` read what it writes. Adapted from Every's `ce-compound` |
 | Agent | `rex-code-reviewer` | `frxnls:rex-code-reviewer` | Multi-reviewer PR review (simplicity, security, docs, contracts) — quote-the-line gate, LLM-security lens, hybrid inline comments + summary with severity badges |
@@ -47,6 +61,9 @@ frxnls/                           # the plugin
 | Agent | `plan-implementer-backend` | `frxnls:plan-implementer-backend` | Backend/DB-focused fork of `plan-implementer` — detects the project's migration tool (Drizzle/Prisma/Supabase CLI, no Supabase assumption), **generates** migrations and reviews the SQL for data loss, verifies against a **disposable** DB (never prod), enforces RLS/authz + contract-safety, opens a PR. Optional Supabase advisor lints (see below) |
 | Agent | `fx-repo-research` | `frxnls:fx-repo-research` | Read-only codebase scout — maps stack/versions, architecture, conventions, and the concrete files/patterns/tests a change touches; flags when local patterns are thin/absent. Dispatched by `fx-plan` (and `fx-compound`); returns a structured brief, never writes |
 | Agent | `fx-learnings-research` | `frxnls:fx-learnings-research` | Read-only institutional-knowledge scout — searches `docs/solutions/`, `CONCEPTS.md`, git history, and issues for prior learnings; for `fx-compound`, scores overlap against a doc being written. Returns links + relationships, never writes |
+| Agent | `fx-lane-researcher` | `frxnls:fx-lane-researcher` | Runs **one** market-research lane for `fx-market-research` (competitors, demand, sizing, economics, distribution, build/maintain). Blind to the other lanes by design, tags every figure `[CITED]`/`[DERIVED]`/`[ASSUMED]`, writes `UNKNOWN — <what would resolve it>` rather than inventing a number, and closes with a confidence rating. Never renders a verdict |
+| Agent | `fx-risk-researcher` | `frxnls:fx-risk-researcher` | The regulatory / compliance / platform-terms / legal lane — close-reads ToS and licensing for the one clause that disqualifies the business. On `opus` **by design**, same reasoning as `rex-code-reviewer.security`: a cheaper model skimming past that sentence invalidates every other lane's work |
+| Agent | `fx-screen-scout` | `frxnls:fx-screen-scout` | The cheap first-pass screen behind `fx-idea-scout` — accounts-needed math, public demand evidence, channel sniff test, one candidate per agent. Deliberately shallow and on `haiku`; killing ideas here is the point |
 
 > **Optional — Supabase advisor lints for `plan-implementer-backend`.** The agent
 > is portable and assumes no Supabase by default. To have it also run Supabase
@@ -55,9 +72,77 @@ frxnls/                           # the plugin
 > and (2) add `mcp__supabase__get_advisors` to the agent's `tools:` frontmatter.
 > When that tool isn't present the agent simply reports "advisors not run."
 
+## Venture discovery loop
+
+Three skills that run **upstream of everything below** — deciding whether an idea is
+worth building at all, before `fx-brainstorm` starts on what and how.
+
+```
+fx-idea-scout ─▶ fx-market-research ─▶ fx-go-nogo ─┬─▶ NO-GO  ─▶ ledger it, done
+generate/frame   7 lanes, concurrent   score       ├─▶ PIVOT  ─▶ back to fx-idea-scout
++ cheap screen   → evidence dossier    + decide    └─▶ GO / CONDITIONAL GO ─▶ handoff.md
+→ shortlist +                                                                 │
+  approved brief                                                              ▼
+  (kill criteria                                       drop it into the new repo as
+   signed off here)                                    docs/brainstorms/<slug>.md, and
+                                                       fx-brainstorm ─▶ fx-plan ─▶ fx-ship
+                                                       takes over (delivery pipeline, below)
+```
+
+**Standalone by design.** This loop never runs inside a product repo — at decision time
+that repo doesn't exist yet — and it never writes to your working directory. Everything
+lives under one venture root, resolved as `$FX_VENTURE_HOME` → the path in
+`~/.frxnls/venture-home` → a one-time question on first run (default `~/ventures`):
+
+```
+$VENTURE_HOME/
+  constraints.md      # standing constraints: MRR target, maintenance ceiling, capital,
+                      # verticals to avoid, unfair advantages — written once, reused
+  _ledger.md          # every idea ever screened, append-only, with verdict + date
+  <slug>/
+    brief.md          # persona, wedge, ACV math, channel, pre-committed kill criteria
+    research/         # one file per lane + _index.md
+    decision.md       # verdict, scorecard, what-would-change-my-mind, next experiment
+    handoff.md        # (on a Go) portable packet for the new repo
+```
+
+`constraints.md` and `_ledger.md` sit at the **root**, not inside a venture, so the ledger
+stays comparable across ventures and years. Per-venture deviations are recorded as
+overrides in that venture's `brief.md` rather than by editing the standing file — and the
+ledger means a previously-killed idea gets flagged with its original verdict instead of
+silently re-researched.
+
+Three things keep the verdict honest:
+
+- **Kill criteria are pre-committed and user-approved.** They're written into `brief.md`
+  *before* research begins, and `fx-idea-scout` will not write the brief to disk without
+  your explicit sign-off. If the skill both authored the criteria and later graded against
+  them, the check would be circular — so `fx-go-nogo` grades against criteria *you* own.
+- **Gates, not averages.** Demand, distribution, and blocking risk are pass/fail. Failing
+  one is a No-Go regardless of weighted total; a strong average never papers over a failed
+  gate.
+- **Evidence discipline.** Every quantitative claim is tagged `[CITED]`/`[DERIVED]`/`[ASSUMED]`,
+  sizing is bottom-up from real registries (license rolls, association membership, registrant
+  counts) rather than top-down analyst TAM, and every lane must report disconfirming evidence
+  or state that it searched and found none.
+
+On a **Go**, the loop hands off rather than chaining: `fx-go-nogo` writes a portable
+`handoff.md` that you drop into the new repo as `docs/brainstorms/<slug>.md`, where
+`fx-brainstorm` picks it up as its origin. It carries the scorecard's *low* scores forward
+as known weaknesses — so the new repo doesn't restart from the clean, optimistic story and
+rediscover what this loop already paid to find.
+
+```
+# whether to build it at all — runs outside any repo
+/frxnls:fx-idea-scout "$8k MRR, low maintenance, B2B"   # → shortlist + approved brief(s)
+/frxnls:fx-market-research <slug>                       # → <slug>/research/*.md
+/frxnls:fx-go-nogo <slug>                               # → <slug>/decision.md (+ handoff.md on a Go)
+```
+
 ## Delivery pipeline
 
-The skills and agents compose into one path from idea to merged code. `fx-ship` is the
+Once a venture is a Go (or you already have a repo), the skills and agents compose into
+one path from idea to merged code. `fx-ship` is the
 orchestrator; everything else is a stage it (or you) calls. Each component is forked
 only where the **tools or risk** genuinely differ — shared knowledge stays in skills.
 
@@ -70,7 +155,7 @@ discover/rank        WHAT             HOW        orchestrate plan-implementer   
    └── (scheduled or manual) green-lit items enter at fx-ship / fx-debug / fx-plan
 ```
 
-**0 · Triage the inbox — `fx-triage`.** Optional front of the loop. Scans GitHub
+**0 · Triage the inbox — `fx-triage`.** Optional front of the pipeline. Scans GitHub
 (issues/PRs/CI via `gh`) and any available MCP sources (Sentry/Linear/…), ranks what's
 actionable (P0–P3), cross-references `docs/solutions/`, and **surfaces a digest** — then
 stops. *You* green-light items into the pipeline (it never implements). Run it manually,
@@ -119,6 +204,13 @@ worktree its own Simulator + Expo dev server: a dedicated device named `expo-wt-
 several branches run side by side with no sim/port collisions — and `fx-qa-mobile-ios`
 resolves *this* worktree's device by that same name, so it never drives the wrong sim.
 
+**Off-path: a bug, not a feature — `fx-debug`.** When triage surfaces a defect (or QA
+finds one worth a full investigation), `/frxnls:fx-debug` runs the investigation properly:
+it checks `docs/solutions/` first, reproduces, traces the code path, and holds a **causal-chain
+gate** — no fix is proposed until the chain from trigger to symptom has no gaps, with a
+testable prediction for every uncertain link. Then, if you choose to fix, a test-first fix
+and a handoff to `fx-compound`.
+
 **6 · Retire — `fx-teardown`.** Implementers and `fx-ship` never auto-clean, so the branch/worktree
 survives PR + QA for revisions. Once the PR is merged or abandoned, `/frxnls:fx-teardown` removes
 the worktree, optionally deletes the local branch, and shuts down its `expo-wt-*` sim — never
@@ -142,6 +234,9 @@ the next one easier.
 
 # or hand the work to an implementer directly
 "implement the plan in docs/plans/add-orders.md"      →  plan-implementer(-backend)
+
+# a bug rather than a feature
+/frxnls:fx-debug #57                                  # root-cause first, then fix
 
 # after it ships, compound the learning
 /frxnls:fx-compound                                   # → docs/solutions/<category>/<slug>.md (+ CONCEPTS.md)
@@ -190,9 +285,10 @@ Commit, push, then `marketplace update` + `plugin update` as above.
 
 ## Model configuration
 
-Every model assignment the plugin makes — four of the five agents
+Every model assignment the plugin makes — seven of the eight agents
 (`plan-implementer`, `plan-implementer-backend`, `fx-repo-research`,
-`fx-learnings-research`) and Rex's five finder perspectives — is one canonical map,
+`fx-learnings-research`, `fx-lane-researcher`, `fx-risk-researcher`,
+`fx-screen-scout`) and Rex's five finder perspectives — is one canonical map,
 [`frxnls/model-defaults.json`](frxnls/model-defaults.json), resolved **at spawn
 time** by [`frxnls/scripts/resolve-model.py`](frxnls/scripts/resolve-model.py)
 (python3 stdlib, no dependencies). Every skill/agent that spawns one of these
@@ -226,6 +322,18 @@ only the keys you want to change; anything you omit falls through to the repo de
 | `rex-code-reviewer.documentation` | haiku |
 | `rex-code-reviewer.correctness` | sonnet |
 | `rex-code-reviewer.data-integrity` | sonnet |
+| `fx-lane-researcher` | sonnet |
+| `fx-risk-researcher` | opus |
+| `fx-screen-scout` | haiku |
+
+**The venture loop's "install site" is `$VENTURE_HOME`.** `fx-idea-scout` and
+`fx-market-research` run outside any git repo, where the resolver's default git-root
+detection has nothing to find — so they call it with `--repo-root "$VENTURE_HOME"`, and the
+override file for the three venture agents is `$VENTURE_HOME/.frxnls/model-tiers.json`.
+Retier there (e.g. bumping `fx-screen-scout` to `sonnet` if the screen grades thin evidence
+as *observed*) rather than editing the plugin. `fx-go-nogo` is intentionally unkeyed — it
+runs on the session model, since the judgment step is the one place where cheaping out is
+false economy.
 
 Two worked examples: [`examples/model-tiers.high-stakes.json`](examples/model-tiers.high-stakes.json)
 (a production repo — backend implementer and security review both stay/move to `opus`)
