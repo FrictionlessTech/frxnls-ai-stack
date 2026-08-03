@@ -9,12 +9,14 @@ Checks, in order:
   2. Every commands/*.toml parses and carries a prompt with {{args}}.
   3. Every SKILL.md / agents/*.md has frontmatter whose `name` matches its path,
      and a non-empty `description`.
-  4. Assets shared with the Claude Code plugin are byte-identical. This is the
+  4. No agent pins a `model:` or declares a `tools:` allowlist — both make these
+     runtimes drop or silently restrict the agent with no error.
+  5. Assets shared with the Claude Code plugin are byte-identical. This is the
      check that actually earns its keep: the templates, lane briefs, and
      scorecard are the substance, and silent divergence there means the two
      copies of the loop start scoring the same idea differently.
-  5. No Claude-only tool name or path variable leaked into the Gemini tree.
-  6. Skill and agent sets match between the two trees.
+  6. No Claude-only tool name or path variable leaked into the Gemini tree.
+  7. Skill and agent sets match between the two trees.
 
 Pure stdlib, matching the precedent set by frxnls/scripts/resolve-model.py.
 tomllib is 3.11+; on older interpreters the TOML check degrades to a warning
@@ -154,15 +156,28 @@ def check_frontmatter():
             ok(f"frontmatter {rel}")
 
 
-def check_pinned_models():
-    """A pinned `model:` in agent frontmatter is a silent-failure risk.
+def check_agent_portability():
+    """Agent frontmatter must not pin a model id or declare a tool allowlist.
 
-    Antigravity dropped fx-screen-scout from its registry entirely when it
-    pinned `gemini-3-flash-preview` — no error, the agent simply never appeared
-    in /agents, and the skill that delegates to it would have failed at runtime.
-    Neither runtime supports per-invocation overrides anyway, so a pin buys
-    little and costs a whole agent when the id stops resolving.
+    Both are silent-failure risks in these runtimes. Antigravity dropped
+    fx-screen-scout from its registry entirely when it pinned
+    `gemini-3-flash-preview` — no error, the agent simply never appeared in
+    /agents, and the skill delegating to it would have failed at runtime. Tool
+    allowlists carry the same exposure: Antigravity does not document its tool
+    surface, so Gemini CLI names like `grep_search` may not resolve, and an
+    agent silently restricted to nothing looks identical to one that searched
+    and found little.
+
+    Neither key buys much here — no runtime supports per-invocation model
+    overrides, and the researchers need most of the parent tool surface anyway.
+    Scope agents by instruction instead, and enforce anything load-bearing
+    outside the frontmatter.
     """
+    risky = {
+        "model": "pins a model id",
+        "tools": "declares a tool allowlist",
+    }
+    found = False
     for agent in PORTED_AGENTS:
         path = os.path.join(GEM, "agents", agent + ".md")
         if not os.path.exists(path):
@@ -170,15 +185,16 @@ def check_pinned_models():
         m = FRONTMATTER_RE.match(open(path).read())
         if not m:
             continue
-        pin = re.search(r"^model:\s*(\S+)\s*$", m.group(1), re.M)
-        if pin:
-            fail(
-                f"agents/{agent}.md pins model {pin.group(1)!r} — runtimes drop "
-                f"agents with unresolvable model ids silently; verify it appears "
-                f"in /agents or remove the key"
-            )
-    if not any("pins model" in f for f in failures):
-        ok("no agent pins a model id (silent-drop risk)")
+        for key, label in risky.items():
+            if re.search(rf"^{key}:", m.group(1), re.M):
+                found = True
+                fail(
+                    f"agents/{agent}.md {label} — these runtimes drop or silently "
+                    f"restrict agents over unrecognized frontmatter; remove the "
+                    f"`{key}:` key and scope the agent in its prose instead"
+                )
+    if not found:
+        ok("no agent pins a model or declares a tool allowlist (silent-drop risk)")
 
 
 def check_shared_assets():
@@ -239,7 +255,7 @@ def main():
     check_manifest()
     check_commands()
     check_frontmatter()
-    check_pinned_models()
+    check_agent_portability()
     check_shared_assets()
     check_forbidden()
     check_parity()

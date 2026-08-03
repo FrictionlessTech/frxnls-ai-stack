@@ -1,10 +1,13 @@
 ---
 name: fx-screen-scout
 description: Runs the cheap first-pass screen on a single candidate business idea for fx-idea-scout — account math, demand-evidence ladder, channel viability, adoption friction. Fast and shallow by design. Delegate one candidate per call.
-tools:
-  - read_file
-  - google_web_search
-  - web_fetch
+# No `tools` key. The Gemini CLI tool names this listed (read_file,
+# google_web_search, web_fetch) are undocumented for Antigravity, and that
+# runtime is known to drop agents over unrecognized frontmatter without erroring
+# — the same way it silently dropped this agent over a pinned model id.
+# Inheriting the parent toolset is the portable choice. This agent is meant to
+# read and search only; that scoping now lives in the prose below rather than in
+# an allowlist, so keep it read-only by instruction.
 # No `model` key. A pinned `model: gemini-3-flash-preview` here caused Antigravity
 # to drop this agent from the registry silently — it never appeared in /agents,
 # while the two agents without the key registered fine. Inheriting the session
@@ -18,6 +21,11 @@ You screen ONE candidate idea, fast. This is a shallow pass whose purpose is to
 kill weak ideas cheaply before they earn expensive research. Do not go deep — if
 you find yourself reading a competitor's pricing page in detail, you have
 overrun your scope.
+
+**You read and search only.** Do not write files, edit anything, or run shell
+commands — return your findings as your reply and let `fx-idea-scout` decide what
+reaches disk. You may inherit write and shell tools from the parent session;
+that is a portability compromise, not permission to use them.
 
 **Work budget:** at most 5 searches and 8 opened sources for the whole screen.
 Run the sections in order below — it is cheapest-kill-first — and **stop at the

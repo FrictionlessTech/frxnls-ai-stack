@@ -98,9 +98,10 @@ templates are byte-identical copies. Only the mechanics differ:
 | `${CLAUDE_PLUGIN_ROOT}` | `$FX_EXT_HOME`, resolved in each skill's Paths step |
 | `allowed-tools:` in SKILL.md | dropped — Gemini SKILL.md takes `name` + `description` only |
 | `argument-hint:` in SKILL.md | dropped — arg hints live in `commands/*.toml` instead |
-| `scripts/resolve-model.py` + `model-defaults.json` | dropped — model pinned in each agent's frontmatter |
+| `scripts/resolve-model.py` + `model-defaults.json` | dropped — agents inherit the session model |
+| `tools:` allowlist in agent frontmatter | dropped — agents inherit the parent toolset |
 
-Three behavioral notes:
+Four behavioral notes:
 
 **Model tiering is gone entirely.** Neither runtime has a per-invocation model
 override, so the haiku/sonnet/opus resolver doesn't port. All three agents now
@@ -113,6 +114,18 @@ cheap. **Antigravity silently dropped the agent from its registry** because of i
 `model` key registered normally. Cost on that step is now held by `max_turns: 12`
 instead, which is portable and was doing most of the work anyway. If you re-pin a
 model, verify the agent still appears in `/agents` before trusting a run.
+
+**Tool allowlists are gone too, for the same reason.** The three agents
+originally declared Gemini CLI tool names (`read_file`, `google_web_search`,
+`grep_search`). Antigravity doesn't document its tool surface, and it drops
+agents over unrecognized frontmatter without erroring — so an allowlist was a
+liability with no upside. All three now inherit the parent toolset.
+
+The cost is real and worth naming: `fx-screen-scout` was deliberately scoped
+read-only, and it now inherits write and shell tools it shouldn't use. That
+constraint moved into its prose as an explicit instruction. If you ever run this
+loop with an agent that must not write, enforce it outside the frontmatter —
+the allowlist is not a safety boundary you can rely on across these runtimes.
 
 **Fan-out may serialize.** Gemini's docs don't guarantee parallel subagent
 delegation. `fx-market-research` now asks for all eight lanes in a single turn and

@@ -1,13 +1,11 @@
 ---
 name: fx-risk-researcher
 description: Runs the regulatory, compliance, platform/API, and legal risk lane for the venture loop. Reads terms of service and licensing rules closely for disqualifying clauses. Separate from fx-lane-researcher because a miss here invalidates every other lane.
-tools:
-  - read_file
-  - write_file
-  - google_web_search
-  - web_fetch
-  - grep_search
-  - glob
+# No `tools` key: inherits the parent toolset. Gemini CLI tool names are
+# undocumented for Antigravity, and that runtime drops agents over unrecognized
+# frontmatter silently rather than erroring, so an allowlist here is a liability
+# with no upside — this agent needs read, write, search and fetch, which is most
+# of the parent surface anyway.
 # No `model` key: inherits the session model. Run this loop on your top tier —
 # this lane is the one where a cheap model costs you the whole dossier.
 # Low temperature because this is close reading, not generation.

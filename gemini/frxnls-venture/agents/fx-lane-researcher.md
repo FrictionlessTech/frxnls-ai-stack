@@ -1,13 +1,11 @@
 ---
 name: fx-lane-researcher
 description: Runs a single market-research lane (competitors, demand, sizing, economics, distribution, build/maintenance, or adoption/switching) for the venture loop. Returns a sourced, tagged markdown file written to the path given in the assignment. Never renders a verdict. Delegate one lane per call.
-tools:
-  - read_file
-  - write_file
-  - google_web_search
-  - web_fetch
-  - grep_search
-  - glob
+# No `tools` key: inherits the parent toolset. Gemini CLI tool names are
+# undocumented for Antigravity, and that runtime drops agents over unrecognized
+# frontmatter silently rather than erroring, so an allowlist here is a liability
+# with no upside — this agent needs read, write, search and fetch, which is most
+# of the parent surface anyway.
 # No `model` key: inherits the session model, which is what you want here — the
 # lanes are the substance of the dossier. Pin one only to force a cheaper tier.
 temperature: 0.4
