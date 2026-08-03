@@ -5,7 +5,10 @@ brief and `$VENTURE_HOME/constraints.md`. Every lane obeys the evidence discipli
 SKILL.md Step 2 (tagging, bottom-up, confidence, disconfirmation quota).
 
 Every lane ends with the same three sections:
-1. **Confidence** — High/Medium/Low + what would raise it
+1. **Confidence** — High/Medium/Low, backed by a compact coverage line: count of
+   independent sources; how many are direct-buyer vs behavioral vs
+   vendor-authored; recency window; and the single main weakness. A bare
+   "Medium" with no coverage line is a defect.
 2. **Disconfirming evidence found** — at least one item, or an explicit "searched, found none"
 3. **Unknowns** — each with what would resolve it
 
@@ -37,27 +40,43 @@ recommendation threads.
 
 ## Lane 2 — Demand evidence (`demand.md`)
 
-Establish whether the pain is real and *verbalized*. This is the lane that most
-often kills an idea, so run it hard.
+Establish whether the pain is real — and separately, whether anyone *buys* their
+way out of it. This is the lane that most often kills an idea, so run it hard.
+Report the two kinds of evidence under their own headings; a real problem with
+no purchase evidence is a specific, decision-relevant shape of finding.
 
-Find people describing this problem in their own unprompted words. Quote them
-verbatim with links (short quotes only — a sentence, attributed). Prioritize:
+**Problem evidence** — the pain exists, in the buyer's own unprompted words.
+Quote verbatim with links (short quotes only — a sentence, attributed). Cover
+frequency, severity, the current workaround, the measurable consequence, and
+whether the complainers actually match the brief's persona. Prioritize:
 
 - 1–2 star reviews of incumbents naming this gap
 - Subreddit / trade forum / Facebook group / Slack community threads
+- Conference talk titles and trade-press articles about the problem
+
+**Purchase evidence** — someone allocates money or intent to it:
+
+- Existing paid tools, however crude — proof of budget
 - Job postings describing the manual workaround or a role that exists to do it
 - Upwork / Fiverr gigs repeatedly posted for the task
-- Conference talk titles and trade-press articles about the problem
-- Existing paid tools, however crude — proof of budget
+- Consultant / agency service menus covering the workflow
+- People asking for recommendations, issuing RFPs, or describing a switch
+- Who decides, how they buy, and what triggers the purchase (deadline, audit,
+  growth, system change, renewal)
 
-Grade overall demand:
-- **Observed** — multiple independent, unprompted complaints. Quote them.
-- **Adjacent** — complaints about neighboring problems, not this one.
-- **Speculated** — nothing found. Say so bluntly; do not dress it up.
+Rules of independence: count a claim once however many sites syndicate it,
+require at least two distinct source *types*, and separate vendor-authored
+claims from buyer-authored evidence. In confidential or regulated workflows
+buyers rarely complain in public — there, purchase-evidence traces are the
+primary signal, not a fallback.
 
-Also assess **pain intensity**: does this cost the buyer money/time/risk, and how
-often does it recur? Daily bleeding beats annual annoyance. And **who feels it**
-vs **who signs** — when those differ, note it, because it changes the entire sale.
+Grade overall demand on the ladder: **0 inferred · 1 verbalized ·
+2 worked-around · 3 budgeted · 4 sought · 5 switched** — the highest level with
+solid support, stating the independent-source count behind it. Finding nothing
+is level 0; say so bluntly, do not dress it up.
+
+Also note **who feels it** vs **who signs** — when those differ, it changes the
+entire sale.
 
 ---
 
@@ -87,15 +106,20 @@ whoever's left.
 
 - **Pricing.** What comparable tools charge this buyer, and on what axis (seat,
   usage, flat, % of managed assets). Find their budget for adjacent tools.
-- **ACV.** Realistic, with reasoning. Test the brief's assumption and say if
-  it's wrong.
-- **CAC.** By the channels the distribution lane will examine, roughly.
+- **Per-account revenue.** Realistic monthly revenue per account and the implied
+  ACV (annual = monthly × 12), with reasoning. Test the brief's assumption and
+  say if it's wrong.
+- **CAC.** Estimate against the brief's named channel hypothesis — you cannot
+  see the distribution lane, so state that assumption explicitly; the assembly
+  step cross-checks it against what distribution actually finds.
 - **Payback and time to first dollar.** Sales cycle length for this buyer type.
   Procurement, security review, or committee approval each add months — find
   evidence of how these buyers actually purchase.
 - **Churn shape.** Is this sticky (system of record, embedded in workflow) or
   trivially cancellable? What's typical churn for this category?
 - **Expansion.** Does revenue grow with the account, or is it flat forever?
+  What adjacent action naturally follows the wedge, and what data compounds
+  with repeated use? Assess adjacency quality, not platform stories.
 - **Cost floor.** API costs, LLM inference, data licensing, hosting per account.
   Watch for anything that scales with usage and compresses margin.
 
@@ -179,3 +203,36 @@ ongoing maintenance, so this section carries real weight:
 
 Estimate **hours/week at 25 accounts** and compare to the constraints file. Be
 pessimistic; maintenance estimates are wrong in one direction.
+
+---
+
+## Lane 8 — Adoption & switching (`adoption.md`)
+
+What must a buyer do, abandon, or risk to adopt the wedge? Default-on; skipped
+only when the screen showed a genuinely greenfield, run-alongside wedge (the
+skip reason goes in `_index.md`). Adoption friction kills otherwise-attractive
+gaps: many wedges fail not on demand but on the path into the account.
+
+Assess concretely:
+
+- **Time to first value** — from signup to the first moment the buyer sees the
+  outcome. Can value be demonstrated with historical or exported data before
+  any integration?
+- **Integration prerequisites** — what must connect before value is visible,
+  and how gated is each API (partner programs, approval queues)?
+- **Migration** — does any data or record have to move? From where, at what
+  risk?
+- **Parallel-run feasibility** — can it run alongside the incumbent without
+  migrating the system of record? Is adoption reversible if it disappoints?
+- **Stakeholders** — how many people must say yes (user, budget owner, IT,
+  security, compliance), and what does each veto look like?
+- **Procurement and security review** — is a questionnaire, SOC 2, or committee
+  standard for this buyer even at pilot scale? Find evidence of how these
+  buyers actually onboard vendors.
+- **Behavior change** — who has to work differently, and how much training that
+  takes.
+- **Perceived switching risk** — what breaks for the buyer if the tool is wrong
+  or the vendor disappears.
+
+The strongest wedges are adjacent, additive, and reversible before they become
+systems of record. Say plainly where this one sits on that spectrum.

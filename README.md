@@ -42,8 +42,8 @@ frxnls/                           # the plugin
 
 | Type  | Name                | Invoke                     | What it does |
 |-------|---------------------|----------------------------|--------------|
-| Skill | `fx-idea-scout`        | `/frxnls:fx-idea-scout`       | **Step 1 of the venture loop**: generate candidates (open mode) or frame the one you brought (targeted mode), then *cheaply* screen them — accounts-needed math, public demand evidence graded observed/adjacent/speculated, a named channel, constraint fit. Fans out `fx-screen-scout` per candidate. Ends at a shortlist plus a `brief.md` whose **kill criteria you sign off on before any research runs**. Screens, never researches deeply |
-| Skill | `fx-market-research`   | `/frxnls:fx-market-research`  | **Step 2**: fan out seven independent lanes concurrently — competitors, demand, bottom-up sizing, economics, risk, distribution, build/maintenance (plus an optional switching-cost lane) — into a sourced dossier under `<venture>/research/`. Every number is tagged `[CITED]`/`[DERIVED]`/`[ASSUMED]`, each lane must report disconfirming evidence, and inter-lane conflicts are surfaced rather than smoothed. Gathers evidence, **never decides** |
+| Skill | `fx-idea-scout`        | `/frxnls:fx-idea-scout`       | **Step 1 of the venture loop**: generate candidates (open mode) or frame the one you brought (targeted mode), then *cheaply* screen them — accounts-needed math, demand evidence graded on a 0–5 ladder (inferred → verbalized → worked-around → budgeted → sought → switched), a named channel with viability checks, adoption friction, why-now, constraint fit. Fans out `fx-screen-scout` per candidate. Ends at a shortlist plus a `brief.md` whose **kill criteria you sign off on before any research runs**. Screens, never researches deeply |
+| Skill | `fx-market-research`   | `/frxnls:fx-market-research`  | **Step 2**: fan out eight independent lanes concurrently — competitors, demand (problem *and* purchase evidence), bottom-up sizing, economics, risk, distribution, build/maintenance, adoption & switching — into a sourced dossier under `<venture>/research/`. Every number is tagged `[CITED]`/`[DERIVED]`/`[ASSUMED]`, each lane must report disconfirming evidence, and inter-lane conflicts are surfaced rather than smoothed. Gathers evidence, **never decides** |
 | Skill | `fx-go-nogo`           | `/frxnls:fx-go-nogo`          | **Step 3**: reads the full lane files and renders **GO / CONDITIONAL GO / PIVOT / NO-GO** — pre-committed kill criteria checked first, then a 10-dimension weighted scorecard where every score cites its lane. Demand, distribution, and blocking risk are **gates, not averages**. Always names what would change the answer and the single cheapest next experiment *with a pre-declared pass threshold*. Writes `decision.md`, appends the ledger, and on a Go emits a portable `handoff.md` |
 | Skill | `fx-triage`            | `/frxnls:fx-triage`           | The **front of the delivery pipeline**: scan work sources (GitHub issues/PRs/CI via `gh`; Sentry/Linear/etc. when those MCP connectors are present), rank what's actionable (P0–P3), cross-reference `docs/solutions/`, and surface a triage digest. Discovers and ranks — **never implements**; hands green-lit items to `fx-ship` / `fx-debug`. Runs interactively or **headless on a schedule** (cloud routine / local cron); `gh`-first so it degrades gracefully when MCP connectors are absent |
 | Skill | `fx-qa-web`            | `/frxnls:fx-qa-web`           | Test a running web app in a real browser, then fix and verify bugs (Playwright MCP) |
@@ -100,7 +100,7 @@ $VENTURE_HOME/
                       # verticals to avoid, unfair advantages — written once, reused
   _ledger.md          # every idea ever screened, append-only, with verdict + date
   <slug>/
-    brief.md          # persona, wedge, ACV math, channel, pre-committed kill criteria
+    brief.md          # persona, trigger, wedge, money math, channel, pre-committed kill criteria
     research/         # one file per lane + _index.md
     decision.md       # verdict, scorecard, what-would-change-my-mind, next experiment
     handoff.md        # (on a Go) portable packet for the new repo
@@ -331,7 +331,7 @@ only the keys you want to change; anything you omit falls through to the repo de
 detection has nothing to find — so they call it with `--repo-root "$VENTURE_HOME"`, and the
 override file for the three venture agents is `$VENTURE_HOME/.frxnls/model-tiers.json`.
 Retier there (e.g. bumping `fx-screen-scout` to `sonnet` if the screen grades thin evidence
-as *observed*) rather than editing the plugin. `fx-go-nogo` is intentionally unkeyed — it
+at ladder level 2+) rather than editing the plugin. `fx-go-nogo` is intentionally unkeyed — it
 runs on the session model, since the judgment step is the one place where cheaping out is
 false economy.
 
