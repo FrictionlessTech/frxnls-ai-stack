@@ -9,6 +9,18 @@ between minor versions.
 ## [Unreleased]
 
 ### Added
+- **Codex plugin distribution** at `plugins/frxnls/`, with a native
+  `.codex-plugin/plugin.json` and repo marketplace entry under
+  `.agents/plugins/marketplace.json`. All 14 canonical skills are adapted for
+  Codex, and the 8 Claude agent behaviors are emitted as skills so orchestrators
+  can delegate them through Codex's built-in `explorer`, `worker`, and `default`
+  subagents without a separate user-level agent install. A deterministic builder
+  keeps the Codex tree synced from the canonical Claude sources, copies shared
+  references/assets/templates, strips unsupported frontmatter, rewrites
+  provider-specific invocation/model/tool semantics, and fails on compatibility
+  leaks. The Codex manifest and all generated skills pass the official plugin
+  validator; this is an additional distribution and does not bump the Claude
+  plugin version.
 - **Gemini CLI + Antigravity port of the venture loop** at `gemini/frxnls-venture/`,
   tracking frxnls v0.21.0. One directory installs in both runtimes —
   `gemini-extension.json` is read by Gemini CLI, `plugin.json` by Antigravity,
