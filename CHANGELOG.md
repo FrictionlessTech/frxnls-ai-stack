@@ -8,7 +8,31 @@ between minor versions.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Gemini CLI + Antigravity port of the venture loop** at `gemini/frxnls-venture/`,
+  tracking frxnls v0.21.0. One directory installs in both runtimes —
+  `gemini-extension.json` is read by Gemini CLI, `plugin.json` by Antigravity,
+  and each ignores the other's manifest. The frxnls plugin itself is unchanged;
+  this is an additional distribution, not a version bump.
+  - Roughly 95% of each skill is byte-identical to the frxnls original, and
+    `lanes.md`, `scorecard.md` and the three templates are exact copies. Only
+    mechanics differ: tool names (`run_shell_command`, `ask_user`,
+    `google_web_search`), subagents exposed as tools of their own name rather
+    than via `Agent()`, and `${CLAUDE_PLUGIN_ROOT}` replaced by an `EXT_HOME`
+    probe that walks all three install locations.
+  - **Model tiering does not port.** Neither runtime supports a per-invocation
+    model override, so `resolve-model.py` and `model-defaults.json` have no
+    equivalent; all three agents inherit the session model. Pinning
+    `gemini-3-flash-preview` on `fx-screen-scout` made Antigravity drop the
+    agent from its registry silently — it never appeared in `/agents`, with no
+    error. Screen cost is held by `max_turns` instead.
+  - **Fan-out is expressed as intent, not guarantee**, since neither runtime
+    documents concurrent delegation. Lane independence is the property that
+    matters for correctness and it holds either way.
+  - `gemini/check-port.py` guards the seam: the five shared assets must stay
+    byte-identical to the frxnls originals, names must match paths, no
+    Claude-only tool name may leak, no agent may pin a model id, and nothing
+    ported may have been deleted upstream.
 
 ## [0.21.0] — 2026-08-03
 

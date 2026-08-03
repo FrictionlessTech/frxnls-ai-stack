@@ -1,0 +1,12 @@
+description = "Venture loop step 1 — generate/frame business ideas and cheaply screen them to a shortlist + approved brief."
+
+prompt = """
+Activate the `fx-idea-scout` skill and follow it exactly.
+
+User input (may be empty — an idea, vertical, category, or constraint like
+"$5k MRR, low maintenance"):
+
+{{args}}
+
+Do not skip the Step 5 approval gate, even if the input says to just go.
+"""
