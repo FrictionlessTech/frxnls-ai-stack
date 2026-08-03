@@ -1,0 +1,34 @@
+{
+  "name": "frxnls",
+  "version": "0.21.0",
+  "description": "Frictionless workflows for venture discovery and the plan-to-PR software delivery loop.",
+  "author": {
+    "name": "Miguel Zakharia",
+    "url": "https://github.com/FrictionlessTech"
+  },
+  "homepage": "https://github.com/FrictionlessTech/frxnls-ai-stack",
+  "repository": "https://github.com/FrictionlessTech/frxnls-ai-stack",
+  "keywords": [
+    "codex",
+    "planning",
+    "code-review",
+    "quality-assurance",
+    "venture-research"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Frictionless",
+    "shortDescription": "Plan, implement, review, QA, and evaluate ventures",
+    "longDescription": "A complete Frictionless workflow library for venture discovery, implementation planning, worktree-aware delivery, code review, debugging, QA, security audits, triage, and durable engineering learnings.",
+    "developerName": "Frictionless Technologies",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/FrictionlessTech/frxnls-ai-stack",
+    "defaultPrompt": "Use Frictionless to plan, ship, review, or QA this work.",
+    "brandColor": "#7C3AED"
+  }
+}

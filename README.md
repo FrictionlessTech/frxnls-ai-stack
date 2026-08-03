@@ -1,13 +1,21 @@
 # frxnls-ai-stack
 
-Miguel's personal Claude Code stack — skills and agents published under the
-`frxnls:` namespace via a local plugin marketplace.
+Miguel's personal AI development stack for Claude Code, Gemini CLI/Antigravity,
+and Codex. The canonical skills and agents are published through provider-native
+plugin formats from one repository.
 
 ## Layout
 
 ```
 .claude-plugin/marketplace.json   # marketplace manifest (name: frxnls)
-frxnls/                           # the plugin
+.agents/plugins/marketplace.json  # Codex marketplace manifest (name: frxnls)
+plugins/frxnls/                   # generated Codex plugin
+├── .codex-plugin/plugin.json     # Codex plugin manifest (name: frxnls)
+├── skills/                       # generated Codex-native skills (including agent behaviors)
+├── templates/                    # copied venture-loop templates
+├── references/runtime.md         # Codex delegation/tool compatibility rules
+└── scripts/build.py              # deterministic Claude-source → Codex build
+frxnls/                           # canonical Claude plugin
 ├── .claude-plugin/plugin.json    # plugin manifest (name: frxnls)
 ├── skills/
 │   ├── fx-idea-scout/SKILL.md        # /frxnls:fx-idea-scout — generate/frame venture ideas → screened shortlist + brief
@@ -37,6 +45,11 @@ frxnls/                           # the plugin
 ├── model-defaults.json            # canonical agent → model map
 └── scripts/                       # resolve-model.py + its tests
 ```
+
+The component table below uses Claude invocation syntax. In Codex, invoke the
+same workflow as `$<name>` (for example, `$fx-plan` or `$rex-code-reviewer`).
+Claude agents are exposed as Codex skills, and orchestrators delegate them to
+Codex's built-in `explorer`, `worker`, or `default` subagents.
 
 ## Components
 
@@ -251,6 +264,20 @@ the next one easier.
 
 This repo *is* the marketplace, served from GitHub. On any machine:
 
+### Codex
+
+```bash
+codex plugin marketplace add FrictionlessTech/frxnls-ai-stack
+codex plugin add frxnls@frxnls
+```
+
+Start a new Codex task after installation so the bundled skills are loaded. Use
+`$fx-plan`, `$fx-ship`, `$rex-code-reviewer`, and the other component names shown
+above. Codex model selection comes from the active Codex session/config; the
+Claude-specific `model-defaults.json` aliases are intentionally not imported.
+
+### Claude Code
+
 ```bash
 claude plugin marketplace add FrictionlessTech/frxnls-ai-stack --scope user
 claude plugin install frxnls@frxnls --scope user
@@ -263,7 +290,11 @@ claude plugin install frxnls@frxnls --scope user
 The live source is the GitHub repo, not your local checkout. To ship a change:
 
 ```bash
-# edit a skill/agent file, BUMP the version in frxnls/.claude-plugin/plugin.json, then:
+# edit a canonical skill/agent file, then rebuild and validate the Codex view:
+python3 plugins/frxnls/scripts/build.py
+python3 plugins/frxnls/scripts/build.py --check
+
+# bump the provider manifest version(s) being released, then:
 git add -A && git commit -m "..." && git push
 
 # pull the pushed change into Claude Code:
@@ -273,6 +304,11 @@ claude plugin update frxnls@frxnls   # qualified name required; plain `frxnls` e
 
 (Restart Claude Code to load updated components.)
 
+For Codex, run `codex plugin marketplace upgrade frxnls`, reinstall/update the
+plugin, and start a new task. The committed `plugins/frxnls/skills/` tree is
+generated; edit `frxnls/skills/` or `frxnls/agents/`, then run the builder rather
+than editing generated files directly.
+
 > `plugin update` only pulls when the manifest `version` changed — always bump it.
 > To force a refresh without a bump: `claude plugin uninstall frxnls && claude plugin install frxnls@frxnls --scope user`.
 
@@ -280,6 +316,9 @@ claude plugin update frxnls@frxnls   # qualified name required; plain `frxnls` e
 
 - New skill: `frxnls/skills/<name>/SKILL.md`
 - New agent: `frxnls/agents/<name>.md`
+
+Run `python3 plugins/frxnls/scripts/build.py` so the new component is also emitted
+as a Codex skill, then validate and bump the relevant provider manifests.
 
 Commit, push, then `marketplace update` + `plugin update` as above.
 

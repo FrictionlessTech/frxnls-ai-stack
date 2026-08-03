@@ -1,0 +1,20 @@
+{
+  "name": "frxnls",
+  "interface": {
+    "displayName": "Frictionless"
+  },
+  "plugins": [
+    {
+      "name": "frxnls",
+      "source": {
+        "source": "local",
+        "path": "./plugins/frxnls"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
