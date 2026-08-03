@@ -115,7 +115,7 @@ instead, which is portable and was doing most of the work anyway. If you re-pin 
 model, verify the agent still appears in `/agents` before trusting a run.
 
 **Fan-out may serialize.** Gemini's docs don't guarantee parallel subagent
-delegation. `fx-market-research` now asks for all seven lanes in a single turn and
+delegation. `fx-market-research` now asks for all eight lanes in a single turn and
 treats wall-clock parallelism as a bonus — lane *independence* is the property that
 actually matters for correctness, and that's preserved either way.
 

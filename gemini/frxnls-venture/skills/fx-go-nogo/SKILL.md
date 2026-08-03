@@ -154,7 +154,8 @@ skill will pick it up as its origin document. It must stand alone without the
 research folder:
 
 - The thesis in three sentences: who, what pain, what wedge
-- Buyer persona and the money math (ACV, accounts needed)
+- Buyer persona and the money math (monthly revenue per account, implied ACV,
+  accounts needed)
 - The wedge, stated as the narrowest shippable v1
 - Channel: how the first 10 customers get reached
 - **Constraints that survived** — anything the risk lane found that limits the

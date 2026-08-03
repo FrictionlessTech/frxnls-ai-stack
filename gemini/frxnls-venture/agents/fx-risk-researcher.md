@@ -46,5 +46,7 @@ write `UNKNOWN — <what would resolve it>` rather than guessing.
 Render no verdict. Report severity, not a recommendation.
 
 Write to the absolute path given in your assignment using `write_file`, ending
-with Confidence, Disconfirming evidence found, and Unknowns. Report back a
-three-line summary only.
+with Confidence, Disconfirming evidence found, and Unknowns. Back the confidence
+grade with a compact coverage line — independent-source count, direct vs
+vendor-authored split, recency window, main weakness. Report back a three-line
+summary only.

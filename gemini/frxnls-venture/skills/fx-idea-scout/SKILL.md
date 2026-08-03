@@ -14,7 +14,9 @@ fx-idea-scout ─▶ fx-market-research ─▶ fx-go-nogo ─▶ (handoff packet
 ```
 
 This skill is **cheap and fast**. Its job is to kill ideas before they cost real
-research. Target: under 15 minutes of tool time, ending in 2–3 survivors.
+research. The budget is work, not wall-clock: per candidate, at most 5 searches
+and 8 opened sources, stopping early on a decisive kill and stopping a check as
+soon as it has one supporting observation. End with 2–3 survivors.
 
 ## Paths — resolve before anything else
 
@@ -106,7 +108,10 @@ Do not re-interrogate on later runs. Two exceptions:
 
 Read `$VENTURE_HOME/_ledger.md`. If anything raised this session matches a
 previously screened idea, say so immediately with the original verdict, its date,
-and the constraints in effect at the time — then ask what's changed. Do not
+and the constraints in effect at the time — then ask what's changed. Match on
+the entry's persona and wedge, not just the market: *same market + same wedge*
+is dead unless its revisit trigger has fired; *same market with a new wedge or
+new persona* is a legitimate new candidate — say which case this is. Do not
 silently re-research dead ideas; that's the whole reason the ledger sits at the
 root rather than inside a venture folder.
 
@@ -136,8 +141,12 @@ working day:
 3. **Seam mapping.** Gaps live at the *seams between tools* and in the
    *spreadsheet residue* — the manual step someone does to get data from system A
    into system B. List every seam you can find.
-4. **Gap candidates.** For each seam: who feels the pain, how often, what they do
-   today instead, why the incumbent hasn't closed it.
+4. **Gap candidates.** State each in this form: *when **trigger** occurs,
+   **persona** must move **artifact/data** from **system A** to **system B** to
+   achieve **outcome**, but currently uses **workaround**, costing
+   **consequence**.* A candidate that can't fill the trigger slot — nothing
+   makes the buyer act *now* — is a flag; genuine dissatisfaction with no
+   urgency rarely converts to a purchase.
 
 The "why hasn't the incumbent closed it" answer is the whole game. If you can't
 answer it, the gap is probably imaginary or unprofitable — flag it as such.
@@ -153,7 +162,15 @@ them rather than depth in one:
   postings that describe a manual process.
 - **Boring verticals with money** — trades, compliance-heavy professions, B2B
   services, equipment-heavy industries. Low competition, high willingness to pay.
-- **Regulatory change** — new rules create a mandatory-purchase window.
+- **Mandatory work** — recurring obligations handled manually, found in
+  regulatory exam manuals, insurer/lender checklists, certification
+  requirements, procurement questionnaires, audit-prep guides, SOP templates,
+  and filing calendars. Mandatory + recurring + manual is attractive even when
+  nobody posts an angry thread about it.
+- **Change-driven windows** — something recently shifted: new rules or
+  enforcement, incumbent price hikes or acquisitions, APIs opening or closing,
+  platform deprecations, labor shortages, new model capabilities. Change creates
+  a why-now; the screen will ask for it.
 - **Unbundling** — a hated all-in-one suite where one module is the real job.
 - **Service-to-software** — agencies/consultants doing a repeatable thing by hand.
 - **Marketplace exhaust** — Upwork/Fiverr gigs posted repeatedly for the same task.
@@ -162,8 +179,18 @@ them rather than depth in one:
   advantages from `$VENTURE_HOME/constraints.md`. Flag any candidate where they
   have a real edge; these get scoring priority.
 
+Shape candidates against **wedge archetypes** rather than defaulting to
+dashboards and copilots — reconciliation, evidence/audit-trail,
+exception-management, preflight (catch errors before submission), translation
+(system A's format → system B's), monitoring, coordination (replace chasing),
+data-enrichment, decision-support, migration, overlay (improve an incumbent
+without replacing it), compliance. Label each candidate with its archetype;
+spread across several.
+
 Produce 8–15 candidates, each as one line: *who* has *what pain*, *how often*,
-and what they pay for the alternative today.
+what they pay for the alternative today, and — where inferable — the *purchase
+trigger* that would make them act now (deadline, audit, growth, system change,
+renewal) and the budget line it displaces or joins.
 
 ## Step 2 — The cheap screen
 
@@ -176,49 +203,67 @@ but never let one scout read another's output.
 This step is broad, shallow retrieval — the whole point of the screen is that
 it's cheap. Cost is held down by `max_turns: 12` in
 `$EXT_HOME/agents/fx-screen-scout.md`, not by a pinned model; keep the scouts
-shallow rather than expecting the runtime to make them cheap for you.
+shallow rather than expecting the runtime to make them cheap for you. If you
+find one grading thin evidence at ladder level 2 or above, tighten its
+assignment rather than letting the bar slip.
 
-Each returns:
+Each runs its checks cheapest-kill-first, stops at the first decisive kill, and
+returns:
 
-**a. Customer-count math.** MRR target ÷ plausible ACV = accounts needed. State
-the number. This single figure reframes everything: 4 accounts at $2k/mo and 40
+**a. Customer-count math.** Accounts needed = MRR target ÷ plausible monthly
+revenue per account (state the implied ACV = monthly × 12 alongside). State the
+number. This single figure reframes everything: 4 accounts at $2k/mo and 40
 at $200/mo are different businesses with different validation paths. If the
 required account count exceeds what the reachable market plausibly supports,
 kill it here.
 
-**b. Demand evidence — is the pain publicly verbalized?** Look for people
-complaining about this *in their own words*, unprompted:
-- 1–2 star reviews of incumbents naming this specific gap
-- forum/subreddit/Slack-community complaints
-- job posts describing the manual workaround
-- Upwork/Fiverr gigs for the task
-- existing paid tools, however bad
-
-Grade the evidence: **observed** (found real complaints, quote them),
-**adjacent** (people complain about neighbors of this problem), or
-**speculated** (you're inferring it and found nothing). *Speculated is a kill by
-default.* The absence of anyone complaining is data, not a green field.
+**b. Demand evidence — graded on the ladder.** Search both *verbal* traces
+(1–2 star reviews naming this gap, forum/subreddit/Slack complaints) and
+*behavioral* traces (job posts describing the manual workaround, Upwork/Fiverr
+gigs, existing paid tools however bad, consultant service menus, roles staffed
+to do the work). Grade 0–5: **0 inferred · 1 verbalized · 2 worked-around ·
+3 budgeted · 4 sought · 5 switched**. Survival needs **level ≥ 2 from ≥ 2
+independent sources** (different domains and source types; syndicated content
+counts once) — complaints alone don't clear the bar, and level 0–1 is a kill.
+For confidential or regulated workflows where buyers don't complain in public,
+behavioral traces are the primary signal, not a fallback. Absence of *both*
+trace kinds is data, not a green field. Note the purchase trigger and budget
+source when the evidence shows one.
 
 **c. Channel sniff test.** Name one specific, concrete place these buyers
 congregate — an association, conference, directory, newsletter, subreddit, trade
 publication. Not "LinkedIn". If you can't name one, that's a kill: for a niche
 B2B product, no channel means no business regardless of how good the product is.
+Then three viability checks: does it allow vendor access, roughly how many
+reachable buyers vs. the accounts-needed number, and what trust barrier a
+newcomer faces.
 
 **d. Constraint fit.** Score against `$VENTURE_HOME/constraints.md`: maintenance
 surface (count brittle integrations, compliance recertification, likely support
 load), plausible time to first dollar, capital needed, founder fit.
 
-**e. Feature-or-product.** Would the obvious incumbent ship this next quarter?
-Can it be cloned in a weekend now that the LLM does the hard part? Say so plainly.
+**e. Feature-or-product, and why now.** Would the obvious incumbent ship this
+next quarter? Can it be cloned in a weekend now that the LLM does the hard part?
+Say so plainly — but note the two rescues: an incumbent with distribution yet
+weak economic incentive to serve this segment, or a job requiring
+cross-incumbent neutrality, can make a "feature" a viable wedge. Then: why is
+this more buildable or sellable now than three years ago? No credible answer is
+a flag — long-standing gaps usually persist because they're structurally
+unattractive.
 
-Kill anything failing b, c, or the account math. Be ruthless — the point of this
-skill is that killing is cheap here and expensive later.
+**f. Adoption friction.** Time to first value, and can it run alongside the
+incumbent without migrating the system of record? Heavy migration + multiple
+stakeholders + slow time-to-value kills otherwise-attractive gaps.
+
+Kill anything failing b, c, or the account math; treat a hard f failure the same
+way. Be ruthless — the point of this skill is that killing is cheap here and
+expensive later.
 
 ## Step 3 — Present and choose
 
-Show a compact table: candidate | accounts needed @ ACV | demand evidence grade |
-channel | fit | verdict. Order by strength. Include the killed ones with
-one-line reasons — the user should see what died and why.
+Show a compact table: candidate | accounts needed @ $/mo | demand ladder level |
+channel | why now | fit | verdict. Order by strength. Include the killed ones
+with one-line reasons — the user should see what died and why.
 
 Then use `ask_user` (type `choice`, `multiSelect: true`) to let them pick 1–3 to
 research. Offer "none of these, generate more" as an option and mean it.
@@ -228,13 +273,14 @@ research. Offer "none of these, generate more" as an option and mean it.
 For each chosen candidate, create `$VENTURE_HOME/<slug>/brief.md` from
 `$EXT_HOME/skills/fx-idea-scout/templates/brief.md`. This is the sequential step
 that everything downstream depends on — the parallel research lanes are
-meaningless without a fixed segment and ACV assumption, so the brief must pin
-down:
+meaningless without a fixed segment and per-account revenue assumption, so the
+brief must pin down:
 
 - The **one** buyer persona (title, company size, who signs)
 - The specific pain, in the buyer's own language, with a real quote if you found one
+- The purchase trigger and the budget line this displaces or joins
 - The wedge — narrowest useful first version
-- ACV assumption and accounts-needed math
+- Monthly revenue per account, implied ACV, and the accounts-needed math
 - Named channel hypothesis
 - **Constraint overrides** — any deviation from the standing constraints for this
   venture specifically (different MRR target, higher maintenance tolerance,
@@ -261,9 +307,9 @@ three fields that most change the outcome downstream:
 
 1. **The persona.** Too broad and every research lane returns mush. If it names
    more than one title, say so and push to narrow it.
-2. **The ACV assumption.** This drives the accounts-needed math, which drives the
-   sizing and distribution lanes. State where the number came from and how
-   confident you are.
+2. **The money-math assumption.** The monthly revenue per account drives the
+   accounts-needed math, which drives the sizing and distribution lanes. State
+   where the number came from and how confident you are.
 3. **The kill criteria.** Read them out individually. For each, state plainly what
    research finding would trip it.
 
@@ -273,8 +319,9 @@ Then use `ask_user`:
 - **Edit the kill criteria** — take their replacements verbatim. Do not
   reinterpret, soften, or "improve" what they write; if a criterion seems too
   strict, say so once and then record it as written.
-- **Edit the persona or ACV** — apply, then re-derive the accounts-needed math
-  and re-present, since changing ACV changes everything below it.
+- **Edit the persona or the money math** — apply, then re-derive the
+  accounts-needed math and re-present, since changing the per-account revenue
+  changes everything below it.
 - **Drop this candidate** — ledger it and move to the next.
 
 Only after approval, write `$VENTURE_HOME/<slug>/brief.md` and add a line at the

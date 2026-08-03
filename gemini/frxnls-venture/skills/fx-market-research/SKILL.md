@@ -1,6 +1,6 @@
 ---
 name: fx-market-research
-description: Run deep, parallel market research on a business idea — competitors, demand evidence, bottom-up sizing, pricing/economics, regulatory and platform risk, distribution channels, and build/maintenance cost — producing a sourced evidence dossier. Use when the user says "research this market", "who are the competitors", "size this market", "is there room for X", "validate this idea", or after fx-idea-scout produces a shortlist. Fans out into independent research lanes. Step 2 of the venture loop; gathers evidence, never decides — fx-go-nogo makes the call.
+description: Run deep, parallel market research on a business idea — competitors, demand evidence, bottom-up sizing, pricing/economics, regulatory and platform risk, distribution channels, build/maintenance cost, and adoption/switching friction — producing a sourced evidence dossier. Use when the user says "research this market", "who are the competitors", "size this market", "is there room for X", "validate this idea", or after fx-idea-scout produces a shortlist. Fans out into independent research lanes. Step 2 of the venture loop; gathers evidence, never decides — fx-go-nogo makes the call.
 ---
 
 # fx-market-research: brief → sourced evidence dossier
@@ -51,9 +51,10 @@ Read `$VENTURE_HOME/<slug>/brief.md` and `$VENTURE_HOME/constraints.md`.
 If no brief exists, create one before fanning out (template at
 `$EXT_HOME/skills/fx-idea-scout/templates/brief.md`). **Do not skip this.** The
 lanes are only independent because they share a fixed definition of the segment,
-the wedge, and the ACV assumption — sizing and pricing research is worthless
-without them. If the user arrives with a raw idea, ask the minimum questions
-needed to pin down buyer persona, wedge, and ACV, then draft the brief.
+the wedge, and the per-account revenue assumption — sizing and pricing research
+is worthless without them. If the user arrives with a raw idea, ask the minimum
+questions needed to pin down buyer persona, wedge, and monthly revenue per
+account, then draft the brief.
 
 **The brief must be user-approved before fan-out.** Check for the
 `Approved by user on <date>` line in its kill-criteria section. If it's absent —
@@ -80,6 +81,7 @@ separate context and see none of this conversation.
 | Risk | `risk.md` | `fx-risk-researcher` | Regulatory, compliance, platform/API terms, legal exposure |
 | Distribution | `distribution.md` | `fx-lane-researcher` | Exactly how do you reach the first 10 buyers? |
 | Build & maintain | `build.md` | `fx-lane-researcher` | Effort to v1, and the ongoing maintenance surface |
+| Adoption & switching | `adoption.md` | `fx-lane-researcher` | What must a buyer do, abandon, or risk to adopt? |
 
 Each subagent is exposed as a tool of its own name. Give each one the **absolute
 path** it must write to: `$VENTURE_HOME/<slug>/research/<file>`. Create that
@@ -90,15 +92,16 @@ runtime serializes the delegations, that is acceptable and changes nothing about
 correctness. What is never acceptable is letting one lane read another's output —
 cross-contamination lets a single lane's error propagate through the dossier.
 
-The risk lane runs as a separate subagent rather than a seventh copy of the lane
+The risk lane runs as a separate subagent rather than an eighth copy of the lane
 researcher. That's deliberate: risk close-reads terms of service and licensing
 for the one clause that disqualifies the business, at temperature 0.1, and a
 cheaper or looser pass skimming past that sentence invalidates every other lane's
 work. Run this loop on your top available model for the same reason.
 
-Optional eighth lane when relevant: **Switching cost** (`fx-lane-researcher`) —
-what a buyer must abandon, migrate, or retrain to adopt. Run it whenever
-incumbents hold the system of record.
+The Adoption & switching lane is **default-on** — adoption friction kills
+otherwise-attractive wedges even in greenfield markets. Skip it only when the
+scout screen showed a genuinely greenfield, run-alongside wedge with trivial
+time to first value, and record the skip reason in `_index.md`.
 
 ## Step 2 — Evidence discipline
 
@@ -117,9 +120,10 @@ useful output; fabricated precision is poison.
 
 **Bottom-up sizing only.** Count actual entities — SEC/IAPD registrant counts,
 state license rolls, association membership, Google Maps counts, LinkedIn
-company filters, industry census data — then multiply by realistic ACV.
-Top-down analyst TAM figures are near-useless at $5–10k MRR scale and must never
-be the primary basis. Cite them only as a sanity check, if at all.
+company filters, industry census data — then multiply by realistic monthly
+revenue per account. Top-down analyst TAM figures are near-useless at $5–10k MRR
+scale and must never be the primary basis. Cite them only as a sanity check, if
+at all.
 
 **Confidence rating.** Every section closes with High / Medium / Low plus one
 line on what would raise it.
@@ -139,6 +143,11 @@ When all lanes return, write `$VENTURE_HOME/<slug>/research/_index.md`:
 - **Conflicts between lanes**, flagged explicitly and left unresolved. Do not
   smooth them over — a sizing lane finding 4,000 buyers while distribution finds
   no way to reach them is the single most decision-relevant fact in the dossier.
+- **Economics ↔ distribution cross-check.** The economics lane estimated CAC
+  against the brief's channel hypothesis, blind to the distribution lane. If
+  distribution invalidated or materially revised that channel, flag the
+  economics unit math as resting on a dead assumption — as a conflict, not a
+  correction.
 - Confidence heat map by lane
 - The top 5 unknowns, ranked by how much they'd move the decision
 - Any pre-committed kill criterion from the brief that already appears tripped,
@@ -151,7 +160,7 @@ Then offer to run `fx-go-nogo`.
 ## Handling multiple ventures
 
 If the user selected several candidates, run them **sequentially by venture**,
-fanning out within each. Seven lanes × three ventures at once produces noise and
+fanning out within each. Eight lanes × three ventures at once produces noise and
 blown context. Confirm before starting venture two — findings from the first
 often change what's worth researching.
 

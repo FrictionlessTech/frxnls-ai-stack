@@ -1,4 +1,4 @@
-description = "Venture loop step 2 — fan out seven independent research lanes into a sourced evidence dossier."
+description = "Venture loop step 2 — fan out eight independent research lanes into a sourced evidence dossier."
 
 prompt = """
 Activate the `fx-market-research` skill and follow it exactly.

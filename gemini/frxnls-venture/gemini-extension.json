@@ -1,5 +1,5 @@
 {
   "name": "frxnls-venture",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Venture discovery loop for Gemini CLI: fx-idea-scout → fx-market-research → fx-go-nogo. Screens business ideas, gathers sourced evidence in parallel lanes, and renders a scored go/no-go. Ported from the frxnls Claude Code plugin."
 }

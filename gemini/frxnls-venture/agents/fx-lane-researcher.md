@@ -1,6 +1,6 @@
 ---
 name: fx-lane-researcher
-description: Runs a single market-research lane (competitors, demand, sizing, economics, distribution, or build/maintenance) for the venture loop. Returns a sourced, tagged markdown file written to the path given in the assignment. Never renders a verdict. Delegate one lane per call.
+description: Runs a single market-research lane (competitors, demand, sizing, economics, distribution, build/maintenance, or adoption/switching) for the venture loop. Returns a sourced, tagged markdown file written to the path given in the assignment. Never renders a verdict. Delegate one lane per call.
 tools:
   - read_file
   - write_file
@@ -52,7 +52,11 @@ editorializes corrupts the scorecard downstream. Report what you found.
 Write to the absolute path given in your assignment using `write_file`. End
 every file with:
 
-1. **Confidence** — High / Medium / Low, plus one line on what would raise it
+1. **Confidence** — High / Medium / Low, plus one line on what would raise it,
+   backed by a compact coverage line: independent-source count; how many are
+   direct-buyer vs behavioral vs vendor-authored; recency window; main weakness.
+   The coverage line is what makes the label comparable across lanes — a bare
+   grade is a defect.
 2. **Disconfirming evidence found**
 3. **Unknowns** — each with what would resolve it
 

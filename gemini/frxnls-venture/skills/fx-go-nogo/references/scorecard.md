@@ -23,13 +23,18 @@ A gate scoring 1–2 forces No-Go regardless of the weighted total.
 
 ## 1. Demand evidence — GATE
 
-- **5** — Multiple unprompted public complaints naming this exact pain; people already paying for inadequate alternatives.
-- **4** — Clear complaints found, some evidence of budget.
-- **3** — Adjacent pain well-documented; this specific gap inferred.
-- **2** — Thin, mostly reasoning from first principles.
-- **1** — Nothing found. Searched properly, silence.
+Anchored to the demand lane's evidence ladder (0 inferred · 1 verbalized ·
+2 worked-around · 3 budgeted · 4 sought · 5 switched):
 
-Score 1–2 → No-Go. Silence is not a green field.
+- **5** — Ladder 4–5: buyers actively seeking replacements or observably switching; people already paying for inadequate alternatives.
+- **4** — Ladder 3: budget observed — staff, vendors, or tools paid to address this exact pain — plus unprompted complaints.
+- **3** — Ladder 2: workarounds observed (spreadsheets, agencies, scripts) from independent sources; budget not yet evidenced.
+- **2** — Ladder 1: verbalized only, or thin reasoning from first principles.
+- **1** — Ladder 0: nothing found — neither verbal complaints nor behavioral traces. Searched properly, silence.
+
+Score 1–2 → No-Go. Silence is not a green field — but check the lane
+distinguished truly-absent evidence from confidential workflows where only
+behavioral traces exist; behavioral traces count.
 
 ## 2. Distribution — GATE
 
@@ -53,7 +58,7 @@ Score 1 → No-Go.
 
 ## 4. Economics
 
-Judge on: ACV × accounts-needed math being plausible; CAC payback under ~12 months; sticky rather than trivially cancellable; margin not eaten by per-account API/inference/data cost.
+Judge on: monthly revenue per account × accounts-needed math being plausible (accounts needed = target MRR ÷ monthly revenue per account); CAC payback under ~12 months; sticky rather than trivially cancellable; margin not eaten by per-account API/inference/data cost.
 
 - **5** — Strong ACV, short payback, sticky, clean margin.
 - **3** — Workable but tight on one axis.
