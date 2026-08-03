@@ -10,6 +10,72 @@ between minor versions.
 
 _Nothing yet._
 
+## [0.21.0] — 2026-08-03
+
+### Changed
+- **Venture loop screens for purchase opportunities, not complaints.** Selective
+  adoption of an external review of the discovery loop, keeping the cheap-screen
+  discipline intact (one haiku pass per candidate — the review's staged
+  per-candidate pipeline, 9-section survivor rubric, and YAML evidence records
+  were deliberately not adopted). What changed:
+  - **Evidence ladder replaces Observed/Adjacent/Speculated** in the screen, the
+    demand lane, and the scorecard's demand gate: 0 inferred · 1 verbalized ·
+    2 worked-around · 3 budgeted · 4 sought · 5 switched. Survival needs
+    level ≥ 2 from ≥ 2 independent sources (different domains and source types;
+    syndicated content counts once) — a cluster of copied complaints no longer
+    clears the bar.
+  - **Purchase situation joins the candidate shape**: purchase trigger (what
+    makes the buyer act *now*) and budget source (the line item displaced or
+    joined) flow from candidate one-liners through the brief template to the
+    handoff packet. Mode A candidates use a structured formula (trigger →
+    persona → system A → system B → workaround → consequence).
+  - **Channel sniff test gains viability checks** — vendor access, reachable
+    volume vs. the account target, trust barrier — beyond merely naming a
+    congregation point.
+  - **Adoption friction is screened and researched**: new screen section f
+    (time to first value; can it run alongside the incumbent?), and the
+    optional switching-cost lane is now a default-on eighth lane, **Adoption &
+    switching** (`adoption.md`), skippable only for genuinely greenfield
+    run-alongside wedges with the skip reason recorded.
+  - **Generation upgrades** in open mode: twelve wedge archetypes
+    (reconciliation, preflight, overlay, compliance, …) to diversify beyond
+    dashboards and copilots; a mandatory-work generator (exam manuals,
+    insurer checklists, filing calendars — quiet obligations need no angry
+    thread); regulatory change broadened to change-driven windows; and a
+    **"why now?"** question in the screen — no credible answer is a flag.
+  - **Demand lane split** into Problem evidence vs Purchase evidence, with
+    source-independence rules (count syndicated claims once, ≥ 2 source types,
+    separate vendor-authored from buyer-authored).
+  - **Confidence labels get coverage lines**: every lane's High/Med/Low must be
+    backed by independent-source count, direct-buyer vs behavioral vs
+    vendor-authored split, recency window, and main weakness.
+  - **Ledger entries carry persona, wedge, and a concrete revisit trigger**, and
+    scout's dead-idea matching distinguishes same-market+same-wedge (dead) from
+    a new wedge, new persona, or a fired revisit trigger (legitimate re-entry).
+
+### Fixed
+- **Money-math terminology.** "MRR target ÷ plausible ACV" mixed monthly and
+  annual units (the brief template already treated "ACV" as $/mo). Standardized
+  everywhere on *accounts needed = target MRR ÷ monthly revenue per account*,
+  with the implied ACV (monthly × 12) stated alongside — before a lane
+  researcher reading "ACV" with its standard annual meaning silently diverged
+  from the brief by 12×.
+- **Economics ↔ distribution lane contradiction.** The economics lane was told
+  to estimate CAC "by the channels the distribution lane will examine" while
+  lanes are isolated by design. It now estimates against the brief's named
+  channel hypothesis (a shared input), and the `_index.md` assembly step
+  cross-checks it against what distribution actually found, flagging a dead
+  channel assumption as a lane conflict.
+- **"Speculated = kill" could wrongly kill confidential workflows.** Buyers
+  don't publicly complain about compliance failures, fraud controls, or revenue
+  leakage. The kill now requires *both* verbal and behavioral traces absent;
+  for confidentiality-shaped workflows, behavioral traces (job posts, gigs,
+  consultant menus, dedicated staffing) are the primary signal.
+- **Wall-clock screen budget replaced with a work budget.** Agents can't
+  measure "under 15 minutes of tool time"; the screen now runs on max 5
+  searches / 8 opened sources per candidate, cheapest-kill-first, stopping at
+  the first decisive kill.
+
 ## [0.20.0] — 2026-08-02
 
 ### Added

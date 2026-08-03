@@ -1,6 +1,6 @@
 ---
 name: fx-market-research
-description: Run deep, parallel market research on a business idea — competitors, demand evidence, bottom-up sizing, pricing/economics, regulatory and platform risk, distribution channels, and build/maintenance cost — producing a sourced evidence dossier. Use when the user says "research this market", "who are the competitors", "size this market", "is there room for X", "validate this idea", or after fx-idea-scout produces a shortlist. Fans out into independent research lanes running concurrently. Step 2 of the venture loop; gathers evidence, never decides — fx-go-nogo makes the call.
+description: Run deep, parallel market research on a business idea — competitors, demand evidence, bottom-up sizing, pricing/economics, regulatory and platform risk, distribution channels, build/maintenance cost, and adoption/switching friction — producing a sourced evidence dossier. Use when the user says "research this market", "who are the competitors", "size this market", "is there room for X", "validate this idea", or after fx-idea-scout produces a shortlist. Fans out into independent research lanes running concurrently. Step 2 of the venture loop; gathers evidence, never decides — fx-go-nogo makes the call.
 argument-hint: "[venture slug, brief path, or idea description]"
 allowed-tools:
   - Bash
@@ -50,9 +50,10 @@ Read `$VENTURE_HOME/<slug>/brief.md` and `$VENTURE_HOME/constraints.md`.
 
 If no brief exists, create one before fanning out. **Do not skip this.** The lanes
 are only parallelizable because they share a fixed definition of the segment, the
-wedge, and the ACV assumption — sizing and pricing research is worthless without
-them. If the user arrives with a raw idea, ask the minimum questions needed to
-pin down buyer persona, wedge, and ACV, then draft the brief.
+wedge, and the per-account revenue assumption — sizing and pricing research is
+worthless without them. If the user arrives with a raw idea, ask the minimum
+questions needed to pin down buyer persona, wedge, and monthly revenue per
+account, then draft the brief.
 
 **The brief must be user-approved before fan-out.** Check for the
 `Approved by user on <date>` line in its kill-criteria section. If it's absent —
@@ -77,6 +78,7 @@ verbatim along with the brief and constraints.
 | Risk | `risk.md` | `fx-risk-researcher` | Regulatory, compliance, platform/API terms, legal exposure |
 | Distribution | `distribution.md` | `fx-lane-researcher` | Exactly how do you reach the first 10 buyers? |
 | Build & maintain | `build.md` | `fx-lane-researcher` | Effort to v1, and the ongoing maintenance surface |
+| Adoption & switching | `adoption.md` | `fx-lane-researcher` | What must a buyer do, abandon, or risk to adopt? |
 
 **Resolve models before spawning**, per the repo convention:
 
@@ -92,7 +94,7 @@ frontmatter is the default, `model-defaults.json` is the source of truth, and
 plugin. `--repo-root` is pinned to `$VENTURE_HOME` because this loop runs outside
 any git repo, where the script's default git-root detection has nothing to find.
 
-The risk lane is tiered to `opus` by default while the other six run `sonnet`.
+The risk lane is tiered to `opus` by default while the other seven run `sonnet`.
 That's deliberate and mirrors `rex-code-reviewer.security`: risk close-reads terms
 of service and licensing for the one clause that disqualifies the business, and a
 cheaper model skimming past that sentence invalidates every other lane's work.
@@ -101,9 +103,10 @@ Each writes to `$VENTURE_HOME/<slug>/research/<file>`. Lanes never read each oth
 output — that's what makes them independent, and cross-contamination would let
 one lane's error propagate.
 
-Optional eighth lane when relevant: **Switching cost** (`fx-lane-researcher`) —
-what a buyer must abandon, migrate, or retrain to adopt. Run it whenever incumbents hold the
-system of record.
+The Adoption & switching lane is **default-on** — adoption friction kills
+otherwise-attractive wedges even in greenfield markets. Skip it only when the
+scout screen showed a genuinely greenfield, run-alongside wedge with trivial
+time to first value, and record the skip reason in `_index.md`.
 
 Spawn via `Agent(fx-lane-researcher)` and `Agent(fx-risk-researcher)`; the agent
 definitions in `${CLAUDE_PLUGIN_ROOT}/agents/` carry the tool allowlists and the
@@ -124,7 +127,8 @@ useful output; fabricated precision is poison.
 
 **Bottom-up sizing only.** Count actual entities — SEC/IAPD registrant counts,
 state license rolls, association membership, Google Maps counts, LinkedIn
-company filters, industry census data — then multiply by realistic ACV.
+company filters, industry census data — then multiply by realistic monthly
+revenue per account.
 Top-down analyst TAM figures are near-useless at $5–10k MRR scale and must never
 be the primary basis. Cite them only as a sanity check, if at all.
 
@@ -146,6 +150,11 @@ When all lanes return, write `$VENTURE_HOME/<slug>/research/_index.md`:
 - **Conflicts between lanes**, flagged explicitly and left unresolved. Do not
   smooth them over — a sizing lane finding 4,000 buyers while distribution finds
   no way to reach them is the single most decision-relevant fact in the dossier.
+- **Economics ↔ distribution cross-check.** The economics lane estimated CAC
+  against the brief's channel hypothesis, blind to the distribution lane. If
+  distribution invalidated or materially revised that channel, flag the
+  economics unit math as resting on a dead assumption — as a conflict, not a
+  correction.
 - Confidence heat map by lane
 - The top 5 unknowns, ranked by how much they'd move the decision
 - Any pre-committed kill criterion from the brief that already appears tripped,
@@ -158,7 +167,7 @@ Then offer to run `fx-go-nogo`.
 ## Handling multiple ventures
 
 If the user selected several candidates, run them **sequentially by venture**,
-parallel within each. Seven lanes × three ventures at once produces noise and
+parallel within each. Eight lanes × three ventures at once produces noise and
 blown context. Confirm before starting venture two — findings from the first
 often change what's worth researching.
 

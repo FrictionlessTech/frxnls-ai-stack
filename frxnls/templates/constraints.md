@@ -12,7 +12,7 @@ operators. Edit freely as circumstances change.
 ## Financial target
 - Target MRR: $
 - Minimum acceptable MRR to bother:
-- Realistic ACV range I'd sell at:
+- Realistic monthly price per account I'd sell at (note the implied ACV):
 
 ## Operating constraints
 - Max ongoing maintenance: ___ hrs/week
