@@ -1,0 +1,11 @@
+description = "Venture loop step 2 — fan out seven independent research lanes into a sourced evidence dossier."
+
+prompt = """
+Activate the `fx-market-research` skill and follow it exactly.
+
+Target (may be empty — a venture slug, a brief path, or an idea description):
+
+{{args}}
+
+Render no verdict. Gathering evidence is the whole job; fx-go-nogo decides.
+"""

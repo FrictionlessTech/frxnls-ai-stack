@@ -1,0 +1,12 @@
+description = "Venture loop step 3 — score the dossier against your constraints and render the go/no-go call."
+
+prompt = """
+Activate the `fx-go-nogo` skill and follow it exactly.
+
+Target (may be empty — a venture slug or research directory path):
+
+{{args}}
+
+Read the full lane files, not just research/_index.md. Check the pre-committed
+kill criteria before scoring.
+"""
